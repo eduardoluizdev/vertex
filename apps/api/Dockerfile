@@ -12,7 +12,7 @@ COPY packages ./packages
 COPY apps/api ./apps/api
 
 # Install all dependencies (including dev dependencies for build)
-RUN npm ci
+RUN npm install
 
 # Generate Prisma Client
 WORKDIR /app/apps/api
@@ -33,7 +33,7 @@ COPY turbo.json ./
 COPY packages ./packages
 COPY apps/api/package*.json ./apps/api/
 
-RUN npm ci --omit=dev
+RUN npm install --omit=dev
 
 # Copy Prisma schema and migrations
 COPY apps/api/prisma ./apps/api/prisma
