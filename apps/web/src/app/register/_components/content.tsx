@@ -4,10 +4,12 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { VertexLogo } from '@/components/vertex-logo';
+import { AnimatedBackground } from '@/app/_components/animated-background';
 
 export function RegisterContent() {
   const router = useRouter();
@@ -67,93 +69,47 @@ export function RegisterContent() {
   }
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left side - Decorative panel */}
-      <div className="hidden lg:flex lg:w-1/2 lg:items-center lg:justify-center lg:bg-primary/5 lg:p-12">
-        <div className="relative w-full max-w-lg">
-          {/* Decorative card */}
-          <div className="rounded-2xl bg-white p-8 shadow-2xl">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                <span className="text-sm font-bold text-primary-foreground">V</span>
-              </div>
-              <span className="text-lg font-semibold">Vertex</span>
+    <div className="relative min-h-screen flex items-center justify-center px-6 py-12">
+      <AnimatedBackground />
+      
+      {/* Back to home link */}
+      <Link 
+        href="/" 
+        className="absolute top-6 left-6 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors z-10"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Voltar para home
+      </Link>
+      
+      {/* Register Card */}
+      <div className="w-full max-w-md relative z-10 animate-fade-in">
+        <div className="glass-strong rounded-3xl p-8 space-y-6">
+          {/* Logo and Header */}
+          <div className="text-center space-y-4">
+            <div className="inline-block">
+              <VertexLogo className="w-16 h-16 text-violet-400 mx-auto" />
             </div>
-
-            {/* Mock dashboard stats */}
-            <div className="mb-6 grid grid-cols-3 gap-4">
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Total vendas</p>
-                <p className="text-lg font-bold">$18.200</p>
-                <span className="text-xs text-emerald-600">+10.2%</span>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Despesas</p>
-                <p className="text-lg font-bold">$18.200</p>
-                <span className="text-xs text-emerald-600">+5.7%</span>
-              </div>
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">Lucro</p>
-                <p className="text-lg font-bold">$18.200</p>
-                <span className="text-xs text-emerald-600">+8.3%</span>
-              </div>
-            </div>
-
-            {/* Mock chart bars */}
-            <div className="mb-4">
-              <p className="mb-3 text-sm font-medium">Receita mensal</p>
-              <div className="flex items-end gap-2">
-                {[40, 65, 45, 80, 55, 90, 70, 60, 85, 50, 75, 95].map(
-                  (h, i) => (
-                    <div
-                      key={i}
-                      className={`flex-1 rounded-t ${i === 11 ? 'bg-primary' : 'bg-primary/20'}`}
-                      style={{ height: `${h}px` }}
-                    />
-                  ),
-                )}
-              </div>
+            <div>
+              <h1 className="text-3xl font-bold text-white">
+                Crie sua conta
+              </h1>
+              <p className="text-gray-400 mt-2">
+                Comece a usar o Vertex gratuitamente
+              </p>
             </div>
           </div>
 
-          {/* Floating decorative elements */}
-          <div className="absolute -right-4 -top-4 h-24 w-24 rounded-2xl bg-primary/10" />
-          <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-xl bg-primary/15" />
-        </div>
-      </div>
-
-      {/* Right side - Form */}
-      <div className="flex w-full items-center justify-center px-6 lg:w-1/2">
-        <div className="w-full max-w-md space-y-8">
-          {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <span className="text-lg font-bold text-primary-foreground">V</span>
-            </div>
-          </div>
-
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold tracking-tight">
-              Crie sua conta no{' '}
-              <span className="text-primary">Vertex</span>
-            </h1>
-            <p className="text-muted-foreground">
-              Preencha os dados abaixo para começar a usar a plataforma
-            </p>
-          </div>
-
-          {/* Error */}
+          {/* Error Message */}
           {error && (
-            <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+            <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-4 text-sm text-red-400">
               {error}
             </div>
           )}
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Register Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="name" className="text-gray-300">Nome</Label>
               <Input
                 id="name"
                 type="text"
@@ -162,12 +118,12 @@ export function RegisterContent() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-gray-300">Email</Label>
               <Input
                 id="email"
                 type="email"
@@ -176,12 +132,12 @@ export function RegisterContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-11"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password" className="text-gray-300">Senha</Label>
               <div className="relative">
                 <Input
                   id="password"
@@ -192,21 +148,21 @@ export function RegisterContent() {
                   required
                   minLength={8}
                   disabled={isLoading}
-                  className="h-11 pr-10"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   tabIndex={-1}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmar senha</Label>
+              <Label htmlFor="confirmPassword" className="text-gray-300">Confirmar senha</Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
@@ -217,38 +173,34 @@ export function RegisterContent() {
                   required
                   minLength={8}
                   disabled={isLoading}
-                  className="h-11 pr-10"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
                   tabIndex={-1}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff size={18} />
-                  ) : (
-                    <Eye size={18} />
-                  )}
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
               </div>
             </div>
 
             <Button
               type="submit"
-              className="h-11 w-full text-base font-semibold"
+              className="h-12 w-full text-base font-semibold bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 mt-6"
               disabled={isLoading}
             >
               {isLoading ? 'Criando conta...' : 'Criar conta'}
             </Button>
           </form>
 
-          {/* Footer */}
-          <p className="text-center text-sm text-muted-foreground">
+          {/* Login Link */}
+          <p className="text-center text-sm text-gray-400">
             Já tem uma conta?{' '}
             <Link
               href="/login"
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
             >
               Fazer login
             </Link>

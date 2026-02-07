@@ -6,12 +6,14 @@ export default auth((req) => {
   const isAuthPage =
     req.nextUrl.pathname === '/login' ||
     req.nextUrl.pathname === '/register';
+  const isHomePage = req.nextUrl.pathname === '/';
 
   if (isAuthPage && isLoggedIn) {
     return NextResponse.redirect(new URL('/', req.nextUrl));
   }
 
-  if (!isLoggedIn && !isAuthPage) {
+  // Allow unauthenticated access to home page, login, and register
+  if (!isLoggedIn && !isAuthPage && !isHomePage) {
     return NextResponse.redirect(new URL('/login', req.nextUrl));
   }
 
