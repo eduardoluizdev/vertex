@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 
-const SELECTED_COMPANY_COOKIE = 'vertex_selected_company_id';
+const SELECTED_COMPANY_COOKIE = 'vertexhub_selected_company_id';
 
 /**
  * Lê o ID da empresa selecionada do cookie (server-side).

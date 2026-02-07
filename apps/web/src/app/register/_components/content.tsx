@@ -8,7 +8,7 @@ import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { VertexLogo } from '@/components/vertex-logo';
+import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { AnimatedBackground } from '@/app/_components/animated-background';
 
 export function RegisterContent() {
@@ -87,14 +87,14 @@ export function RegisterContent() {
           {/* Logo and Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">
                 Crie sua conta
               </h1>
               <p className="text-gray-400 mt-2">
-                Comece a usar o Vertex gratuitamente
+                Comece a usar o VertexHub gratuitamente
               </p>
             </div>
           </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Briefcase, Users, TrendingUp, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { VertexLogo } from '@/components/vertex-logo';
+import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { AnimatedBackground } from './animated-background';
 
 export function LandingContent() {
@@ -15,8 +15,8 @@ export function LandingContent() {
       <nav className="relative z-10 px-6 py-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <VertexLogo className="w-8 h-8 text-violet-400" />
-            <span className="text-xl font-bold text-white">Vertex</span>
+            <VertexHubLogo className="w-8 h-8 text-violet-400" />
+            <span className="text-xl font-bold text-white">VertexHub</span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -41,7 +41,7 @@ export function LandingContent() {
           {/* Logo with glow */}
           <div className="inline-block relative">
             <div className="absolute inset-0 bg-violet-500/50 blur-3xl rounded-full" />
-            <VertexLogo className="relative w-24 h-24 text-violet-400 mx-auto animate-scale-in" />
+            <VertexHubLogo className="relative w-24 h-24 text-violet-400 mx-auto animate-scale-in" />
           </div>
           
           {/* Title */}
@@ -52,7 +52,7 @@ export function LandingContent() {
             </div>
             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight">
               <span className="bg-gradient-to-r from-violet-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent">
-                Vertex
+                VertexHub
               </span>
               <br />
               <span className="text-4xl md:text-5xl">
@@ -126,7 +126,7 @@ export function LandingContent() {
       
       {/* Footer */}
       <footer className="relative z-10 px-6 py-6 text-center text-gray-500 text-sm">
-        <p>© 2026 Vertex. Plataforma de gestão empresarial.</p>
+        <p>© 2026 VertexHub. Plataforma de gestão empresarial.</p>
       </footer>
     </div>
   );

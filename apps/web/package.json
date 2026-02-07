@@ -1,5 +1,5 @@
 {
-  "name": "@vertex/web",
+  "name": "@vertexhub/web",
   "version": "0.0.0",
   "private": true,
   "scripts": {
@@ -33,7 +33,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vertex/typescript-config": "*",
+    "@vertexhub/typescript-config": "*",
     "eslint": "^9.0.0",
     "eslint-config-next": "^16",
     "shadcn": "^3.8.4",

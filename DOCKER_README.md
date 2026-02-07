@@ -1,11 +1,11 @@
-# 🐳 Vertex - Deploy com Docker
+# 🐳 VertexHub - Deploy com Docker
 
 Aplicação dockerizada pronta para deploy no EasyPanel ou qualquer plataforma Docker.
 
 ## 📦 Estrutura
 
 ```
-vertex/
+vertexhub/
 ├── apps/
 │   ├── api/
 │   │   ├── Dockerfile          # 🐳 Container da API NestJS

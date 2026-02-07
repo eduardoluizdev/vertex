@@ -6,7 +6,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
-    container_name: vertex-api
+    container_name: vertexhub-api
     ports:
       - "3001:3001"
     environment:
@@ -16,14 +16,14 @@ services:
       - PORT=3001
     restart: unless-stopped
     networks:
-      - vertex-network
+      - vertexhub-network
 
   # Frontend Web (Next.js)
   web:
     build:
       context: .
       dockerfile: apps/web/Dockerfile
-    container_name: vertex-web
+    container_name: vertexhub-web
     ports:
       - "3000:3000"
     environment:
@@ -35,8 +35,8 @@ services:
       - api
     restart: unless-stopped
     networks:
-      - vertex-network
+      - vertexhub-network
 
 networks:
-  vertex-network:
+  vertexhub-network:
     driver: bridge

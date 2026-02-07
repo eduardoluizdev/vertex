@@ -17,7 +17,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
-import { VertexLogo } from '@/components/vertex-logo';
+import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { SearchBar } from '@/components/sidebar/search-bar';
 import { NavSection } from '@/components/sidebar/nav-section';
 import { NavItem } from '@/components/sidebar/nav-item';
@@ -81,7 +81,7 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                   onClick={() => setCollapsed(false)}
                   className="flex size-10 items-center justify-center"
                 >
-                  <VertexLogo className="size-7 text-sidebar-foreground" />
+                  <VertexHubLogo className="size-7 text-sidebar-foreground" />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Expandir</TooltipContent>
@@ -90,9 +90,9 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         ) : (
           <>
             <Link href="/" className="flex items-center gap-2">
-              <VertexLogo className="size-7 shrink-0 text-sidebar-foreground" />
+              <VertexHubLogo className="size-7 shrink-0 text-sidebar-foreground" />
               <span className="text-base font-semibold text-sidebar-foreground">
-                Vertex
+                VertexHub
               </span>
             </Link>
             <button

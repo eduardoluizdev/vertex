@@ -21,8 +21,8 @@ async function bootstrap() {
 
   // Swagger
   const config = new DocumentBuilder()
-    .setTitle('Vertex API')
-    .setDescription('API do projeto Vertex')
+    .setTitle('VertexHub API')
+    .setDescription('API do projeto VertexHub')
     .setVersion('1')
     .addBearerAuth(
       {

@@ -1,4 +1,4 @@
-export function VertexLogo({ className }: { className?: string }) {
+export function VertexHubLogo({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 32 32"

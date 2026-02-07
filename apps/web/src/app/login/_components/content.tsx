@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
-import { VertexLogo } from '@/components/vertex-logo';
+import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { AnimatedBackground } from '@/app/_components/animated-background';
 
 export function LoginContent() {
@@ -65,7 +65,7 @@ export function LoginContent() {
           {/* Logo and Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">

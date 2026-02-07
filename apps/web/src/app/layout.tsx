@@ -4,8 +4,8 @@ import './globals.css';
 import { AuthSessionProvider } from '@/components/providers/session-provider';
 
 export const metadata: Metadata = {
-  title: 'Vertex',
-  description: 'Vertex web application',
+  title: 'VertexHub',
+  description: 'VertexHub web application',
 };
 
 export default function RootLayout({
