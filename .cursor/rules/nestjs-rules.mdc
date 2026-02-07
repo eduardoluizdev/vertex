@@ -1,0 +1,189 @@
+---
+alwaysApply: true
+---
+
+# NestJS - Boas Praticas e Estrutura do Projeto
+
+Este documento define as regras e boas praticas para o backend NestJS localizado em `apps/api/`.
+
+## Estrutura Modular
+
+Toda feature nova DEVE ser criada dentro da pasta `src/modules/`. Cada modulo encapsula sua propria logica de negocio, controllers, services, DTOs e entidades.
+
+```
+apps/api/src/
+├── app.module.ts              # Modulo raiz (importa todos os modules)
+├── app.controller.ts
+├── app.service.ts
+├── prisma.service.ts
+├── modules/
+│   ├── users/
+│   │   ├── users.module.ts
+│   │   ├── users.controller.ts
+│   │   ├── users.service.ts
+│   │   └── dto/
+│   │       ├── create-user.dto.ts
+│   │       └── update-user.dto.ts
+│   ├── auth/
+│   │   ├── auth.module.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   ├── guards/
+│   │   │   └── jwt-auth.guard.ts
+│   │   ├── strategies/
+│   │   │   └── jwt.strategy.ts
+│   │   └── dto/
+│   │       └── login.dto.ts
+│   └── [nova-feature]/
+│       ├── [feature].module.ts
+│       ├── [feature].controller.ts
+│       ├── [feature].service.ts
+│       └── dto/
+│           ├── create-[feature].dto.ts
+│           └── update-[feature].dto.ts
+```
+
+## Regras de Organizacao
+
+### 1. Um modulo por feature
+
+- Cada feature/dominio tem seu proprio modulo dentro de `src/modules/`
+- NUNCA criar controllers ou services soltos fora de um modulo
+- O nome da pasta do modulo deve ser no plural e em kebab-case (ex: `users`, `order-items`)
+
+### 2. Estrutura interna de cada modulo
+
+Cada modulo DEVE conter no minimo:
+- `[feature].module.ts` - Definicao do modulo NestJS
+- `[feature].controller.ts` - Endpoints da API
+- `[feature].service.ts` - Logica de negocio
+
+Pode conter opcionalmente:
+- `dto/` - Data Transfer Objects para validacao de entrada
+- `guards/` - Guards especificos do modulo
+- `strategies/` - Strategies de autenticacao
+- `interfaces/` - Interfaces e tipos especificos
+- `pipes/` - Pipes customizados
+- `decorators/` - Decorators customizados
+
+### 3. Registro de modulos
+
+- Todo modulo novo DEVE ser importado no `AppModule` (`app.module.ts`)
+- Usar `exports` no modulo quando services precisam ser compartilhados com outros modulos
+
+## Boas Praticas NestJS
+
+### Controllers
+
+- Controllers devem ser finos: apenas receber a request, delegar ao service e retornar a response
+- Usar decorators de rota adequados: `@Get()`, `@Post()`, `@Put()`, `@Patch()`, `@Delete()`
+- Usar `@Body()`, `@Param()`, `@Query()` para extrair dados da request
+- Prefixar a rota no `@Controller('nome-recurso')` com o nome do recurso no plural
+
+```typescript
+@Controller('users')
+export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
+  @Get()
+  findAll() {
+    return this.usersService.findAll();
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.usersService.findOne(id);
+  }
+
+  @Post()
+  create(@Body() createUserDto: CreateUserDto) {
+    return this.usersService.create(createUserDto);
+  }
+}
+```
+
+### Services
+
+- Toda logica de negocio fica no service, NUNCA no controller
+- Injetar dependencias via constructor
+- Usar o `PrismaService` para acesso ao banco de dados
+- Tratar erros com exceptions do NestJS (`NotFoundException`, `BadRequestException`, etc)
+
+```typescript
+@Injectable()
+export class UsersService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  async findAll() {
+    return this.prisma.user.findMany();
+  }
+
+  async findOne(id: string) {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException('Usuario nao encontrado');
+    }
+    return user;
+  }
+}
+```
+
+### DTOs e Validacao
+
+- Usar `class-validator` e `class-transformer` para validacao dos DTOs
+- Cada operacao (create, update) deve ter seu proprio DTO
+- DTOs de update devem usar `PartialType` do `@nestjs/mapped-types`
+
+```typescript
+import { IsString, IsEmail, MinLength } from 'class-validator';
+
+export class CreateUserDto {
+  @IsString()
+  name: string;
+
+  @IsEmail()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+}
+```
+
+```typescript
+import { PartialType } from '@nestjs/mapped-types';
+import { CreateUserDto } from './create-user.dto';
+
+export class UpdateUserDto extends PartialType(CreateUserDto) {}
+```
+
+### Modules
+
+- Declarar controllers e providers explicitamente
+- Usar `imports` para dependencias de outros modulos
+- Usar `exports` para expor services que outros modulos precisam
+
+```typescript
+@Module({
+  imports: [PrismaModule],
+  controllers: [UsersController],
+  providers: [UsersService],
+  exports: [UsersService],
+})
+export class UsersModule {}
+```
+
+## Naming Conventions
+
+- Arquivos: kebab-case com sufixo do tipo (ex: `users.controller.ts`, `create-user.dto.ts`)
+- Classes: PascalCase com sufixo do tipo (ex: `UsersController`, `CreateUserDto`)
+- Metodos de service: camelCase descritivos (ex: `findAll`, `findOne`, `create`, `update`, `remove`)
+- Rotas da API: kebab-case no plural (ex: `/users`, `/order-items`)
+
+## Principios Gerais
+
+- **Injecao de Dependencia**: Sempre usar o sistema de DI do NestJS, nunca instanciar classes manualmente
+- **Separacao de Responsabilidades**: Controller -> Service -> Prisma (banco)
+- **TypeScript Strict**: Tipar tudo, evitar `any`
+- **Tratamento de Erros**: Usar HttpExceptions do NestJS para erros de API
+- **Seguranca**: Validar todos os inputs com DTOs, usar Guards para proteger rotas
