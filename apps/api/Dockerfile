@@ -20,7 +20,7 @@ RUN npx prisma generate
 
 # Build the application
 WORKDIR /app
-RUN npm run build -- --filter=@vertex/api
+RUN npm run build -- --filter=@vertexhub/api
 
 # Production stage
 FROM node:20-alpine AS runner

@@ -3,16 +3,18 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Copy root package files
+# Copy package files first for better caching
 COPY package*.json ./
 COPY turbo.json ./
+COPY packages/typescript-config/package.json ./packages/typescript-config/
+COPY apps/web/package.json ./apps/web/
 
-# Copy workspace packages
+# Install dependencies (cached unless package files change)
+RUN npm install
+
+# Copy source code after installing dependencies
 COPY packages ./packages
 COPY apps/web ./apps/web
-
-# Install all dependencies
-RUN npm install
 
 # Build the application
 WORKDIR /app
