@@ -6,6 +6,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table';
+import { FileQuestion } from 'lucide-react';
 
 import {
   Table,
@@ -32,13 +33,13 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="rounded-md border">
+    <div className="rounded-xl border bg-card shadow-sm hover-lift overflow-hidden">
       <Table>
-        <TableHeader>
+        <TableHeader className="bg-muted/30 backdrop-blur-sm sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
+            <TableRow key={headerGroup.id} className="hover:bg-transparent border-border/40">
               {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
+                <TableHead key={header.id} className="font-semibold uppercase text-xs tracking-wider py-4">
                   {header.isPlaceholder
                     ? null
                     : flexRender(
@@ -56,9 +57,10 @@ export function DataTable<TData, TValue>({
               <TableRow
                 key={row.id}
                 data-state={row.getIsSelected() && 'selected'}
+                className="transition-smooth hover:bg-muted/50 border-border/40"
               >
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
+                  <TableCell key={cell.id} className="py-4">
                     {flexRender(
                       cell.column.columnDef.cell,
                       cell.getContext(),
@@ -71,9 +73,15 @@ export function DataTable<TData, TValue>({
             <TableRow>
               <TableCell
                 colSpan={columns.length}
-                className="h-24 text-center"
+                className="h-48"
               >
-                Nenhum resultado encontrado.
+                <div className="flex flex-col items-center justify-center text-center">
+                  <FileQuestion className="size-16 text-muted-foreground/40 mb-4" />
+                  <p className="text-lg font-medium text-foreground">Nenhum resultado encontrado</p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Tente adicionar novos itens para começar
+                  </p>
+                </div>
               </TableCell>
             </TableRow>
           )}

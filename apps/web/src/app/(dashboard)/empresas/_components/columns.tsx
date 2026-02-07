@@ -2,8 +2,9 @@
 
 import { ColumnDef } from '@tanstack/react-table';
 import Link from 'next/link';
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Trash2, Users, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -31,31 +32,59 @@ export function getColumns(
     {
       accessorKey: 'name',
       header: 'Nome',
-      cell: ({ row }) => (<Link href={`/empresas/${row.original.id}`}>{row.original.name}</Link>),
+      cell: ({ row }) => (
+        <Link 
+          href={`/empresas/${row.original.id}`}
+          className="font-semibold text-primary hover:underline transition-smooth"
+        >
+          {row.original.name}
+        </Link>
+      ),
     },
     {
       accessorKey: 'email',
       header: 'Email',
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">{row.original.email}</span>
+      ),
     },
     {
       accessorKey: 'phone',
       header: 'Telefone',
-      cell: ({ row }) => maskPhone(row.original.phone ?? '') || '—',
+      cell: ({ row }) => (
+        <span className="text-muted-foreground">
+          {maskPhone(row.original.phone ?? '') || '—'}
+        </span>
+      ),
     },
     {
       accessorKey: 'cnpj',
       header: 'CNPJ',
-      cell: ({ row }) => maskCNPJ(row.original.cnpj ?? '') || '—',
+      cell: ({ row }) => (
+        <span className="text-muted-foreground font-mono text-sm">
+          {maskCNPJ(row.original.cnpj ?? '') || '—'}
+        </span>
+      ),
     },
     {
       id: 'customers',
       header: 'Clientes',
-      cell: ({ row }) => row.original._count.customers,
+      cell: ({ row }) => (
+        <Badge variant="outline" className="gap-1.5 font-medium bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800">
+          <Users className="size-3" />
+          {row.original._count.customers}
+        </Badge>
+      ),
     },
     {
       id: 'services',
       header: 'Serviços',
-      cell: ({ row }) => row.original._count.services,
+      cell: ({ row }) => (
+        <Badge variant="outline" className="gap-1.5 font-medium bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800">
+          <Briefcase className="size-3" />
+          {row.original._count.services}
+        </Badge>
+      ),
     },
     {
       id: 'actions',

@@ -2,10 +2,25 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
-import { Home, Building2, LogOut, PanelLeft, Users, Briefcase, LayoutDashboard } from 'lucide-react';
+import { 
+  Home, 
+  LogOut, 
+  PanelLeft, 
+  Users, 
+  Briefcase, 
+  LayoutDashboard,
+  Settings,
+  Shield,
+  HelpCircle,
+  ChevronDown
+} from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
 import { VertexLogo } from '@/components/vertex-logo';
+import { SearchBar } from '@/components/sidebar/search-bar';
+import { NavSection } from '@/components/sidebar/nav-section';
+import { NavItem } from '@/components/sidebar/nav-item';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -15,9 +30,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from '@/components/ui/tooltip';
 
 function getInitials(name: string) {
@@ -36,10 +51,19 @@ interface AppSidebarProps {
 
 export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const { data: session } = useSession();
+  const pathname = usePathname();
 
   const userName = session?.user?.name ?? '';
   const userImage = session?.user?.image ?? undefined;
+  const userEmail = session?.user?.email ?? '';
+
+  // Filter function for search
+  const filterBySearch = (label: string) => {
+    if (!searchQuery) return true;
+    return label.toLowerCase().includes(searchQuery.toLowerCase());
+  };
 
   return (
     <aside
@@ -47,6 +71,7 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         collapsed ? 'w-16' : 'w-72'
       }`}
     >
+      {/* Header */}
       <div className={`flex items-center ${collapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
         {collapsed ? (
           <TooltipProvider>
@@ -80,6 +105,12 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         )}
       </div>
 
+      {/* Search Bar */}
+      <div className="mt-4 px-3">
+        <SearchBar onSearch={setSearchQuery} collapsed={collapsed} />
+      </div>
+
+      {/* Company Selector */}
       <div className="mt-4 px-3">
         <CompanySelector
           companies={companies}
@@ -88,76 +119,91 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         />
       </div>
 
+      {/* Navigation */}
       <TooltipProvider>
-        <nav className={`mt-4 flex flex-1 flex-col gap-1 px-3`}>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
+        <div className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto px-3">
+          {/* MENU Section */}
+          <NavSection title="MENU" collapsed={collapsed}>
+            {filterBySearch('Home') && (
+              <NavItem
                 href="/"
-                className={`flex items-center rounded-lg py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                  collapsed ? 'justify-center px-0' : 'gap-3 px-3'
-                }`}
-              >
-                <Home className="size-5 shrink-0" />
-                {!collapsed && <span>Home</span>}
-              </Link>
-            </TooltipTrigger>
-            {collapsed && <TooltipContent side="right">Home</TooltipContent>}
-          </Tooltip>
-          {selectedCompanyId && (
-            <>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
+                icon={Home}
+                label="Home"
+                isActive={pathname === '/'}
+                collapsed={collapsed}
+              />
+            )}
+            {selectedCompanyId && (
+              <>
+                {filterBySearch('Dashboard') && (
+                  <NavItem
                     href={`/empresas/${selectedCompanyId}`}
-                    className={`flex items-center rounded-lg py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                      collapsed ? 'justify-center px-0' : 'gap-3 px-3'
-                    }`}
-                  >
-                    <LayoutDashboard className="size-5 shrink-0" />
-                    {!collapsed && <span>Dashboard</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && <TooltipContent side="right">Dashboard</TooltipContent>}
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
+                    icon={LayoutDashboard}
+                    label="Dashboard"
+                    isActive={pathname === `/empresas/${selectedCompanyId}`}
+                    collapsed={collapsed}
+                  />
+                )}
+                {filterBySearch('Clientes') && (
+                  <NavItem
                     href={`/empresas/${selectedCompanyId}/clientes`}
-                    className={`flex items-center rounded-lg py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                      collapsed ? 'justify-center px-0' : 'gap-3 px-3'
-                    }`}
-                  >
-                    <Users className="size-5 shrink-0" />
-                    {!collapsed && <span>Clientes</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && <TooltipContent side="right">Clientes</TooltipContent>}
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link
+                    icon={Users}
+                    label="Clientes"
+                    isActive={pathname?.includes('/clientes')}
+                    collapsed={collapsed}
+                  />
+                )}
+                {filterBySearch('Serviços') && (
+                  <NavItem
                     href={`/empresas/${selectedCompanyId}/servicos`}
-                    className={`flex items-center rounded-lg py-2 text-sm text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                      collapsed ? 'justify-center px-0' : 'gap-3 px-3'
-                    }`}
-                  >
-                    <Briefcase className="size-5 shrink-0" />
-                    {!collapsed && <span>Serviços</span>}
-                  </Link>
-                </TooltipTrigger>
-                {collapsed && <TooltipContent side="right">Serviços</TooltipContent>}
-              </Tooltip>
-            </>
-          )}
+                    icon={Briefcase}
+                    label="Serviços"
+                    isActive={pathname?.includes('/servicos')}
+                    collapsed={collapsed}
+                  />
+                )}
+              </>
+            )}
+          </NavSection>
 
-        </nav>
+          {/* SUPORTE Section */}
+          <NavSection title="SUPORTE" collapsed={collapsed}>
+            {filterBySearch('Configurações') && (
+              <NavItem
+                href="/settings"
+                icon={Settings}
+                label="Configurações"
+                isActive={pathname === '/settings'}
+                collapsed={collapsed}
+              />
+            )}
+            {filterBySearch('Segurança') && (
+              <NavItem
+                href="/security"
+                icon={Shield}
+                label="Segurança"
+                isActive={pathname === '/security'}
+                collapsed={collapsed}
+              />
+            )}
+            {filterBySearch('Ajuda') && (
+              <NavItem
+                href="/help"
+                icon={HelpCircle}
+                label="Ajuda & Centro"
+                isActive={pathname === '/help'}
+                collapsed={collapsed}
+              />
+            )}
+          </NavSection>
+        </div>
       </TooltipProvider>
 
+      {/* User Menu */}
       <div className="mt-auto px-3">
         <DropdownMenu>
           <DropdownMenuTrigger
-            className={`flex w-full items-center rounded-lg py-2 outline-none transition-colors hover:bg-sidebar-accent ${
+            className={`flex w-full items-center rounded-lg py-2.5 outline-none transition-all duration-200 hover:bg-sidebar-accent ${
               collapsed ? 'justify-center px-0' : 'gap-3 px-3'
             }`}
           >
@@ -166,7 +212,17 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
               <AvatarFallback>{getInitials(userName || 'U')}</AvatarFallback>
             </Avatar>
             {!collapsed && (
-              <span className="truncate text-sm font-medium">{userName}</span>
+              <>
+                <div className="flex flex-1 flex-col items-start overflow-hidden">
+                  <span className="truncate text-sm font-medium text-sidebar-foreground">
+                    {userName}
+                  </span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {userEmail}
+                  </span>
+                </div>
+                <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
+              </>
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
