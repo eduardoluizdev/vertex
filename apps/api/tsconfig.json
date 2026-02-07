@@ -1,5 +1,5 @@
 {
-  "extends": "@vertex/typescript-config/nestjs.json",
+  "extends": "@vertexhub/typescript-config/nestjs.json",
   "compilerOptions": {
     "outDir": "./dist",
     "baseUrl": "./"

@@ -1,5 +1,5 @@
 {
-  "extends": "@vertex/typescript-config/nextjs.json",
+  "extends": "@vertexhub/typescript-config/nextjs.json",
   "compilerOptions": {
     "declaration": false,
     "declarationMap": false,
