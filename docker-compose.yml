@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  # Backend API (NestJS)
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: vertex-api
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-1d}
+      - PORT=3001
+    restart: unless-stopped
+    networks:
+      - vertex-network
+
+  # Frontend Web (Next.js)
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: vertex-web
+    ports:
+      - "3000:3000"
+    environment:
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_URL=${AUTH_URL:-http://localhost:3000}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+      - API_URL=http://api:3001
+    depends_on:
+      - api
+    restart: unless-stopped
+    networks:
+      - vertex-network
+
+networks:
+  vertex-network:
+    driver: bridge
