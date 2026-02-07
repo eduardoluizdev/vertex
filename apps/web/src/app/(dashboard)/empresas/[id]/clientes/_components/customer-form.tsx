@@ -34,7 +34,7 @@ const customerSchema = z.object({
   phone: z.string().optional(),
   document: z.string().optional(),
   personType: z.enum(['INDIVIDUAL', 'COMPANY'], {
-    required_error: 'Tipo de pessoa é obrigatório',
+    message: 'Tipo de pessoa é obrigatório',
   }),
   zip: z.string().optional(),
   street: z.string().optional(),
