@@ -16,7 +16,7 @@ RUN npm install
 
 # Build the application
 WORKDIR /app
-RUN npm run build -- --filter=@vertex/web
+RUN npm run build -- --filter=@vertexhub/web
 
 # Production stage
 FROM node:20-alpine AS runner
