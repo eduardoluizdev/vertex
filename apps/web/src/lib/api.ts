@@ -1,6 +1,6 @@
 import { auth } from '@/auth';
 
-const API_URL = process.env.API_URL || 'http://localhost:3001';
+const API_URL = process.env.API_URL || 'https://api.vertexhub.dev';
 
 export async function apiClient(
   path: string,

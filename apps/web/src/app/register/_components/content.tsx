@@ -34,7 +34,7 @@ export function RegisterContent() {
     setIsLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vertexhub.dev';
       const response = await fetch(`${apiUrl}/v1/users`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -71,16 +71,16 @@ export function RegisterContent() {
   return (
     <div className="relative min-h-screen flex items-center justify-center px-6 py-12">
       <AnimatedBackground />
-      
+
       {/* Back to home link */}
-      <Link 
-        href="/" 
+      <Link
+        href="/"
         className="absolute top-6 left-6 flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors z-10"
       >
         <ArrowLeft className="w-4 h-4" />
         Voltar para home
       </Link>
-      
+
       {/* Register Card */}
       <div className="w-full max-w-md relative z-10 animate-fade-in">
         <div className="glass-strong rounded-3xl p-8 space-y-6">
