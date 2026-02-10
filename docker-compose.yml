@@ -28,9 +28,9 @@ services:
       - "3000:3000"
     environment:
       - AUTH_SECRET=${AUTH_SECRET}
-      - AUTH_URL=${AUTH_URL:-https://vertexhub.dev}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.vertexhub.dev}
-      - API_URL=https://api.vertexhub.dev
+      - AUTH_URL=${AUTH_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - API_URL=${API_URL}
     depends_on:
       - api
     restart: unless-stopped
