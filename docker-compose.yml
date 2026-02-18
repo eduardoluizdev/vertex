@@ -37,6 +37,25 @@ services:
     networks:
       - vertexhub-network
 
+  # Database (PostgreSQL)
+  db:
+    image: postgres:15-alpine
+    container_name: vertexhub-db
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=vertex
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - vertexhub-network
+
 networks:
   vertexhub-network:
     driver: bridge
+
+volumes:
+  postgres_data:
