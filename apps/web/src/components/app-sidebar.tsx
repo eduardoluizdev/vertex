@@ -14,7 +14,8 @@ import {
   Settings,
   Shield,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  Plug2,
 } from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
@@ -168,6 +169,15 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
 
           {/* SUPORTE Section */}
           <NavSection title="SUPORTE" collapsed={collapsed}>
+            {session?.user?.role === 'ADMIN' && filterBySearch('Integrações') && (
+              <NavItem
+                href="/integracoes"
+                icon={Plug2}
+                label="Integrações"
+                isActive={pathname === '/integracoes'}
+                collapsed={collapsed}
+              />
+            )}
             {filterBySearch('Configurações') && (
               <NavItem
                 href="/settings"
