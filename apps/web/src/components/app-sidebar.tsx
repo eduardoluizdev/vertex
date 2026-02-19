@@ -16,6 +16,7 @@ import {
   HelpCircle,
   ChevronDown,
   Plug2,
+  Mail,
 } from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
@@ -164,6 +165,16 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                   />
                 )}
               </>
+            )}
+            
+            {filterBySearch('Campanhas') && (
+              <NavItem
+                href="/campanhas"
+                icon={Mail}
+                label="Campanhas"
+                isActive={pathname?.includes('/campanhas')}
+                collapsed={collapsed}
+              />
             )}
           </NavSection>
 

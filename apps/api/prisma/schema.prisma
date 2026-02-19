@@ -31,6 +31,18 @@ enum Recurrence {
   YEARLY
 }
 
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  CANCELLED
+  FAILED
+}
+
+enum NotificationType {
+  EXPIRATION_WARNING
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -143,4 +155,32 @@ model IntegrationConfig {
   updatedAt DateTime @updatedAt
 
   @@map("integration_configs")
+}
+
+model Campaign {
+  id          String   @id @default(uuid())
+  name        String
+  subject     String
+  content     String   @db.Text
+  status      CampaignStatus @default(DRAFT)
+  targetAudience TargetAudience @default(ALL)
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum TargetAudience {
+  ALL
+  ACTIVE_CLIENTS
+  INACTIVE_CLIENTS
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  type      NotificationType @unique
+  subject   String
+  content   String   @db.Text
+  isActive  Boolean  @default(true)
+  updatedAt DateTime @updatedAt
 }

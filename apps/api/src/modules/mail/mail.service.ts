@@ -50,6 +50,37 @@ export class MailService {
     }
   }
 
+  async sendHtmlEmail(to: string, subject: string, html: string): Promise<void> {
+    const integrations = await this.integrationsService.getIntegrations();
+    const { apiKey, fromEmail } = integrations.resend;
+
+    if (!apiKey || !apiKey.startsWith('re_')) {
+      this.logger.error('Resend API Key is missing or invalid.');
+      throw new Error('Email service configuration error');
+    }
+
+    const resend = new Resend(apiKey);
+
+    try {
+      const { error } = await resend.emails.send({
+        from: fromEmail || 'VertexHub <no-reply@vertexhub.dev>',
+        to,
+        subject,
+        html,
+      });
+
+      if (error) {
+        this.logger.error(`Falha ao enviar email para ${to}`, error);
+        throw new Error('Falha ao enviar email');
+      }
+
+      this.logger.log(`Email enviado para ${to}`);
+    } catch (err) {
+      this.logger.error(`Erro ao enviar email via Resend para ${to}`, err);
+      throw err;
+    }
+  }
+
   private buildPasswordResetTemplate(name: string, resetUrl: string): string {
     return `
 <!DOCTYPE html>
