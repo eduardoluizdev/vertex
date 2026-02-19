@@ -46,7 +46,7 @@ export function CampaignForm({ initialData, action }: CampaignFormProps) {
   const [loading, setLoading] = useState(false);
 
   const form = useForm<CampaignFormValues>({
-    resolver: zodResolver(campaignSchema),
+    resolver: zodResolver(campaignSchema) as any,
     defaultValues: {
       name: initialData?.name || '',
       subject: initialData?.subject || '',
