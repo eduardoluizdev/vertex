@@ -19,18 +19,21 @@ import { updateResendIntegration, testResendConnection } from '../_actions/integ
 interface ResendCardProps {
   initialApiKey: string;
   initialFrontendUrl: string;
+  initialFromEmail: string;
   isConfigured: boolean;
 }
 
 export function ResendCard({
   initialApiKey,
   initialFrontendUrl,
+  initialFromEmail,
   isConfigured,
 }: ResendCardProps) {
   const [showKey, setShowKey] = useState(false);
   // Initialize with the full key (which comes from backend now)
   const [apiKey, setApiKey] = useState(initialApiKey || '');
   const [frontendUrl, setFrontendUrl] = useState(initialFrontendUrl);
+  const [fromEmail, setFromEmail] = useState(initialFromEmail);
   const [configured, setConfigured] = useState(isConfigured);
   
   const [saveResult, setSaveResult] = useState<{
@@ -57,6 +60,7 @@ export function ResendCard({
         // Update local state with the returned full data
         setApiKey(result.data.resend.apiKey);
         setFrontendUrl(result.data.resend.frontendUrl);
+        setFromEmail(result.data.resend.fromEmail);
         setConfigured(result.data.resend.isConfigured);
       }
     });
@@ -165,6 +169,29 @@ export function ResendCard({
             placeholder="https://app.vertexhub.dev"
             className="w-full rounded-lg border border-input bg-input/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-blue-500/50 focus:ring-2 focus:ring-blue-500/20"
           />
+        </div>
+
+        {/* FROM_EMAIL field */}
+        <div className="space-y-2">
+          <label
+            htmlFor="fromEmail"
+            className="flex items-center gap-2 text-sm font-medium text-foreground"
+          >
+            <Mail className="size-4 text-emerald-400" />
+            Remetente (From Email)
+          </label>
+          <input
+            id="fromEmail"
+            name="fromEmail"
+            type="text"
+            value={fromEmail}
+            onChange={(e) => setFromEmail(e.target.value)}
+            placeholder="VertexHub <no-reply@vertexhub.dev>"
+            className="w-full rounded-lg border border-input bg-input/30 px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 outline-none transition-all focus:border-emerald-500/50 focus:ring-2 focus:ring-emerald-500/20"
+          />
+          <p className="text-xs text-muted-foreground">
+            O domínio deve estar verificado no painel do Resend.
+          </p>
         </div>
 
         {/* Save feedback */}

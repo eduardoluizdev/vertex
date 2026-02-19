@@ -9,6 +9,7 @@ export const RESEND_PROVIDER = 'resend';
 interface ResendConfig {
   apiKey?: string;
   frontendUrl?: string;
+  fromEmail?: string;
 }
 
 @Injectable()
@@ -44,6 +45,7 @@ export class IntegrationsService {
     const frontendUrl =
       (dbFrontendUrl && dbFrontendUrl.length > 0) ? dbFrontendUrl : (process.env.FRONTEND_URL ?? 'http://localhost:3000');
 
+    const fromEmail = cfg.fromEmail || 'VertexHub <no-reply@vertexhub.dev>';
 
     const isConfigured = apiKey.startsWith('re_') && apiKey.length > 10;
 
@@ -54,6 +56,7 @@ export class IntegrationsService {
         enabled: row?.enabled ?? true,
         apiKey,
         frontendUrl,
+        fromEmail,
         isConfigured,
       },
     };

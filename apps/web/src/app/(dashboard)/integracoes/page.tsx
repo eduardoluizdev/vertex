@@ -50,6 +50,7 @@ export default async function IntegracoesPage() {
         <ResendCard
           initialApiKey={integrations?.resend.apiKey ?? ''}
           initialFrontendUrl={integrations?.resend.frontendUrl ?? 'http://localhost:3000'}
+          initialFromEmail={integrations?.resend.fromEmail ?? ''}
           isConfigured={integrations?.resend.isConfigured ?? false}
         />
       </section>

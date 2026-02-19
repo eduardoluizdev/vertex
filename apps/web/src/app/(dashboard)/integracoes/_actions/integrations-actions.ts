@@ -10,6 +10,7 @@ export interface IntegrationsData {
     enabled: boolean;
     apiKey: string;
     frontendUrl: string;
+    fromEmail: string;
     isConfigured: boolean;
   };
 }
@@ -39,11 +40,13 @@ export async function updateResendIntegration(formData: FormData): Promise<{
 }> {
   const apiKey = formData.get('resendApiKey') as string | null;
   const frontendUrl = formData.get('frontendUrl') as string | null;
+  const fromEmail = formData.get('fromEmail') as string | null;
 
   // Build the config patch — only include non-empty fields
   const config: Record<string, string> = {};
   if (apiKey?.trim()) config.apiKey = apiKey.trim();
   if (frontendUrl?.trim()) config.frontendUrl = frontendUrl.trim();
+  if (fromEmail?.trim()) config.fromEmail = fromEmail.trim();
 
   if (Object.keys(config).length === 0) {
     return { success: false, message: 'Nenhuma alteração detectada.' };

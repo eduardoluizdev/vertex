@@ -1,32 +1,38 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Resend } from 'resend';
+import { IntegrationsService } from '../integrations/integrations.service';
 
 @Injectable()
 export class MailService {
-  private readonly resend: Resend;
   private readonly logger = new Logger(MailService.name);
-  private readonly frontendUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
-    const apiKey = this.configService.getOrThrow<string>('RESEND_API_KEY');
-    this.resend = new Resend(apiKey);
-    this.frontendUrl =
-      this.configService.get<string>('FRONTEND_URL') ?? 'http://localhost:3000';
-  }
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly integrationsService: IntegrationsService,
+  ) {}
 
   async sendPasswordResetEmail(
     email: string,
     name: string,
     token: string,
   ): Promise<void> {
-    const resetUrl = `${this.frontendUrl}/reset-password?token=${token}`;
+    const integrations = await this.integrationsService.getIntegrations();
+    const { apiKey, frontendUrl, fromEmail } = integrations.resend;
+
+    if (!apiKey || !apiKey.startsWith('re_')) {
+      this.logger.error('Resend API Key is missing or invalid.');
+      throw new Error('Email service configuration error');
+    }
+
+    const resend = new Resend(apiKey);
+    const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     const html = this.buildPasswordResetTemplate(name, resetUrl);
 
     try {
-      const { error } = await this.resend.emails.send({
-        from: 'VertexHub <no-reaply@vertexhub.dev>',
+      const { error } = await resend.emails.send({
+        from: fromEmail || 'VertexHub <no-reply@vertexhub.dev>',
         to: email,
         subject: '🔑 Recuperação de Senha — VertexHub',
         html,
