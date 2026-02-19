@@ -32,6 +32,8 @@ export function LoginContent() {
         redirect: false,
       });
 
+      console.log(result);
+
       if (result?.error) {
         setError('Email ou senha inválidos');
         return;
@@ -136,7 +138,7 @@ export function LoginContent() {
                 </Label>
               </div>
               <Link
-                href="#"
+                href="/forgot-password"
                 className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors"
               >
                 Esqueceu a senha?

@@ -6,6 +6,11 @@ import { AuthSessionProvider } from '@/components/providers/session-provider';
 export const metadata: Metadata = {
   title: 'VertexHub',
   description: 'VertexHub web application',
+  icons: {
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+    shortcut: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
