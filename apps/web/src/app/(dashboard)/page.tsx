@@ -5,6 +5,7 @@ import { ServicesByRecurrenceChart } from './_components/services-by-recurrence-
 import { TopCompaniesChart } from './_components/top-companies-chart';
 import { Breadcrumb } from '@/components/breadcrumb';
 import { LayoutDashboard } from 'lucide-react';
+import { ExpiringServicesWidget } from './_components/expiring-services-widget';
 
 export type DashboardStats = {
   totals: { companies: number; customers: number; services: number };
@@ -54,6 +55,7 @@ export default async function Home() {
       </div>
 
       <div className="space-y-8">
+        <ExpiringServicesWidget />
         <StatsCards totals={stats.totals} />
 
         <div className="grid gap-8 lg:grid-cols-2">

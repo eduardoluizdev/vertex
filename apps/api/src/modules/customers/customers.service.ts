@@ -20,20 +20,27 @@ export class CustomersService {
       throw new ConflictException('Email already registered');
     }
 
-    const { serviceIds, ...customerData } = createCustomerDto;
+    const { subscriptions, userId, ...customerData } = createCustomerDto;
 
     return this.prisma.customer.create({
       data: {
         ...customerData,
         companyId,
-        ...(serviceIds && {
-          services: {
-            connect: serviceIds.map((id) => ({ id })),
-          },
-        }),
+        ...(userId && { userId }),
+        services: {
+          create: subscriptions?.map((sub) => ({
+            recurrenceDay: sub.recurrenceDay,
+            recurrenceMonth: sub.recurrenceMonth,
+            service: { connect: { id: sub.serviceId } },
+          })),
+        },
       },
       include: {
-        services: true,
+        services: {
+          include: {
+            service: true,
+          },
+        },
       },
     });
   }
@@ -54,7 +61,11 @@ export class CustomersService {
     const customer = await this.prisma.customer.findFirst({
       where: { id, companyId },
       include: {
-        services: true,
+        services: {
+          include: {
+            service: true,
+          },
+        },
       },
     });
 
@@ -78,20 +89,30 @@ export class CustomersService {
       }
     }
 
-    const { serviceIds, ...customerData } = updateCustomerDto;
+    const { subscriptions, userId, ...customerData } = updateCustomerDto;
 
     return this.prisma.customer.update({
       where: { id },
       data: {
         ...customerData,
-        ...(serviceIds !== undefined && {
+        ...(userId && { user: { connect: { id: userId } } }),
+        ...(subscriptions && {
           services: {
-            set: serviceIds.map((serviceId) => ({ id: serviceId })),
+            deleteMany: {},
+            create: subscriptions.map((sub) => ({
+              recurrenceDay: sub.recurrenceDay,
+              recurrenceMonth: sub.recurrenceMonth,
+              service: { connect: { id: sub.serviceId } },
+            })),
           },
         }),
       },
       include: {
-        services: true,
+        services: {
+          include: {
+            service: true,
+          },
+        },
       },
     });
   }

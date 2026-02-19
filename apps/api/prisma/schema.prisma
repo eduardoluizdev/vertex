@@ -97,7 +97,7 @@ model Customer {
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
 
-  services Service[]
+  services Subscription[]
 }
 
 model Service {
@@ -112,7 +112,25 @@ model Service {
   companyId String
   company   Company  @relation(fields: [companyId], references: [id])
 
-  customers Customer[]
+  customers Subscription[]
+}
+
+model Subscription {
+  id        String   @id @default(uuid())
+  
+  recurrenceDay   Int
+  recurrenceMonth Int?
+  
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  
+  serviceId  String
+  service    Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([customerId, serviceId])
 }
 
 model IntegrationConfig {

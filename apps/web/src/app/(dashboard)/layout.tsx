@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { AppSidebar } from '@/components/app-sidebar';
 import { apiClient } from '@/lib/api';
 import { getSelectedCompanyId, SELECTED_COMPANY_COOKIE } from '@/lib/cookies';
+import { Topbar } from '@/components/topbar';
 
 export default async function DashboardLayout({
   children,
@@ -32,12 +33,17 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
       <AppSidebar
         companies={companies}
         selectedCompanyId={resolvedSelectedId}
       />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Topbar selectedCompanyId={resolvedSelectedId} />
+        <main className="flex-1 overflow-y-auto bg-muted/10">
+            {children}
+        </main>
+      </div>
     </div>
   );
 }

@@ -10,9 +10,10 @@ export default async function NovoClientePage({ params }: NovoClientePageProps) 
 
   const servicesResponse = await apiClient(`/v1/companies/${companyId}/services`);
   const services = servicesResponse.ok
-    ? (await servicesResponse.json()).map((s: { id: string; name: string }) => ({
+    ? (await servicesResponse.json()).map((s: { id: string; name: string; recurrence: string }) => ({
         id: s.id,
         name: s.name,
+        recurrence: s.recurrence,
       }))
     : [];
 

@@ -43,7 +43,13 @@ const customerSchema = z.object({
   complement: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
-  serviceIds: z.array(z.string()).optional(),
+  subscriptions: z.array(
+    z.object({
+      serviceId: z.string(),
+      recurrenceDay: z.number().min(1).max(31),
+      recurrenceMonth: z.number().min(1).max(12).optional(),
+    })
+  ).optional(),
 });
 
 type CustomerFormValues = z.infer<typeof customerSchema>;
@@ -51,6 +57,7 @@ type CustomerFormValues = z.infer<typeof customerSchema>;
 type ServiceOption = {
   id: string;
   name: string;
+  recurrence: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 };
 
 interface CustomerFormProps {
@@ -84,11 +91,12 @@ export function CustomerForm({
       complement: '',
       city: '',
       state: '',
-      serviceIds: [],
+      subscriptions: [],
     },
   });
 
   const personType = form.watch('personType');
+  const watchedSubscriptions = form.watch('subscriptions') || [];
 
   const handleCEPBlur = useCallback(
     async (value: string) => {
@@ -150,10 +158,26 @@ export function CustomerForm({
     [personType],
   );
 
+  const toggleService = (serviceId: string, checked: boolean) => {
+    const current = form.getValues('subscriptions') || [];
+    if (checked) {
+      form.setValue('subscriptions', [
+        ...current,
+        { serviceId, recurrenceDay: 1 }, 
+      ]);
+    } else {
+      form.setValue(
+        'subscriptions',
+        current.filter((s) => s.serviceId !== serviceId)
+      );
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <div className="grid gap-6 md:grid-cols-2">
+          {/* ... existing fields ... */}
           <FormField
             control={form.control}
             name="name"
@@ -352,56 +376,111 @@ export function CustomerForm({
         </div>
 
         {services.length > 0 && (
-          <FormField
-            control={form.control}
-            name="serviceIds"
-            render={() => (
-              <FormItem>
-                <div className="mb-4">
-                  <FormLabel className="text-base">Serviços</FormLabel>
-                  <p className="text-sm text-muted-foreground">
-                    Selecione os serviços que deseja vincular a este cliente
-                  </p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-2">
-                  {services.map((service) => (
-                    <FormField
-                      key={service.id}
-                      control={form.control}
-                      name="serviceIds"
-                      render={({ field }) => {
-                        return (
-                          <FormItem
-                            key={service.id}
-                            className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4"
-                          >
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(service.id)}
-                                onCheckedChange={(checked) => {
-                                  return checked
-                                    ? field.onChange([...(field.value || []), service.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                          (value) => value !== service.id
-                                        )
-                                      );
-                                }}
-                              />
-                            </FormControl>
-                            <FormLabel className="font-normal cursor-pointer">
-                              {service.name}
-                            </FormLabel>
-                          </FormItem>
-                        );
-                      }}
-                    />
-                  ))}
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-4">
+            <div className="mb-4">
+              <FormLabel className="text-base">Serviços</FormLabel>
+              <p className="text-sm text-muted-foreground">
+                Selecione os serviços e configure a recorrência
+              </p>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {services.map((service) => {
+                const subscriptionIndex = watchedSubscriptions.findIndex(
+                  (s) => s.serviceId === service.id
+                );
+                const isSelected = subscriptionIndex !== -1;
+
+                return (
+                  <div
+                    key={service.id}
+                    className={`rounded-md border p-4 space-y-3 transition-colors ${
+                      isSelected ? 'border-primary bg-primary/5' : ''
+                    }`}
+                  >
+                    <div className="flex flex-row items-center space-x-3">
+                      <Checkbox
+                        checked={isSelected}
+                        onCheckedChange={(checked) =>
+                          toggleService(service.id, checked as boolean)
+                        }
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-sm font-medium">{service.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {service.recurrence}
+                        </span>
+                      </div>
+                    </div>
+
+                    {isSelected && (
+                      <div className="space-y-3 pt-2 animate-in fade-in slide-in-from-top-2">
+                        {/* Day Field - Always shown for MONTHLY and YEARLY */}
+                        {(service.recurrence === 'MONTHLY' || service.recurrence === 'YEARLY') && (
+                          <FormField
+                            control={form.control}
+                            name={`subscriptions.${subscriptionIndex}.recurrenceDay`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Dia do vencimento</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="number" 
+                                    min={1} 
+                                    max={31} 
+                                    {...field} 
+                                    onChange={e => field.onChange(parseInt(e.target.value))}
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+
+                        {/* Month Field - Only shown for YEARLY */}
+                        {service.recurrence === 'YEARLY' && (
+                          <FormField
+                            control={form.control}
+                            name={`subscriptions.${subscriptionIndex}.recurrenceMonth`}
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-xs">Mês</FormLabel>
+                                <Select
+                                  onValueChange={(val) => field.onChange(parseInt(val))}
+                                  defaultValue={field.value?.toString()}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Mês" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                                      <SelectItem key={m} value={m.toString()}>
+                                        {new Date(0, m - 1).toLocaleString('pt-BR', { month: 'long' })}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        )}
+                        
+                        {(service.recurrence === 'DAILY' || service.recurrence === 'WEEKLY') && (
+                           <p className="text-xs text-muted-foreground">
+                             Recorrência automática definida pelo sistema.
+                           </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <FormMessage>{form.formState.errors.subscriptions?.message}</FormMessage>
+          </div>
         )}
 
         <div className="flex gap-3">

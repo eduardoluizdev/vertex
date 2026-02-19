@@ -20,9 +20,10 @@ export default async function EditarClientePage({ params }: EditarClientePagePro
 
   const customer = await customerResponse.json();
   const services = servicesResponse.ok
-    ? (await servicesResponse.json()).map((s: { id: string; name: string }) => ({
+    ? (await servicesResponse.json()).map((s: { id: string; name: string; recurrence: string }) => ({
         id: s.id,
         name: s.name,
+        recurrence: s.recurrence,
       }))
     : [];
 
@@ -52,7 +53,11 @@ export default async function EditarClientePage({ params }: EditarClientePagePro
             complement: customer.complement ?? '',
             city: customer.city ?? '',
             state: customer.state ?? '',
-            serviceIds: customer.services?.map((s: { id: string }) => s.id) ?? [],
+            subscriptions: customer.services?.map((sub: any) => ({
+               serviceId: sub.service.id,
+               recurrenceDay: sub.recurrenceDay,
+               recurrenceMonth: sub.recurrenceMonth,
+            })) ?? [],
           }}
         />
       </div>

@@ -28,7 +28,11 @@ export class ServicesService {
       where: { companyId },
       include: {
         customers: {
-          select: { id: true, name: true },
+          include: {
+            customer: {
+              select: { id: true, name: true },
+            },
+          },
         },
       },
       orderBy: { createdAt: 'desc' },
@@ -40,7 +44,11 @@ export class ServicesService {
       where: { id, companyId },
       include: {
         customers: {
-          select: { id: true, name: true },
+          include: {
+            customer: {
+              select: { id: true, name: true },
+            },
+          },
         },
       },
     });
