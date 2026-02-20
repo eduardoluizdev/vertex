@@ -180,7 +180,7 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
 
           {/* SUPORTE Section */}
           <NavSection title="SUPORTE" collapsed={collapsed}>
-            {session?.user?.role === 'ADMIN' && filterBySearch('Integrações') && (
+            {filterBySearch('Integrações') && (
               <NavItem
                 href="/integracoes"
                 icon={Plug2}

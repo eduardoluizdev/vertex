@@ -77,7 +77,7 @@ export function ResendCard({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
+    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md">
       {/* Card Header */}
       <div className="relative overflow-hidden px-6 py-5 border-b border-border bg-gradient-to-r from-violet-500/5 via-transparent to-blue-500/5">
         <div className="flex items-center justify-between">

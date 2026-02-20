@@ -28,56 +28,71 @@ export default async function IntegracoesPage() {
   ]);
 
   return (
-    <div className="min-h-screen p-6 md:p-8">
+    <div className="min-h-screen p-6 md:p-8 space-y-10 max-w-7xl mx-auto">
       {/* Page Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/20">
-            <Plug2 className="size-5 text-violet-400" />
+      <div>
+        <div className="flex items-center gap-4 mb-3">
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/20 shadow-inner">
+            <Plug2 className="size-6 text-violet-500 dark:text-violet-400" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">
               Integrações
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground mt-1">
               Configure serviços externos para expandir as funcionalidades do VertexHub.
             </p>
           </div>
         </div>
+        <div className="h-px w-full bg-gradient-to-r from-border via-border/50 to-transparent mt-6" />
       </div>
 
       {/* Section: Email */}
       {isAdmin && adminIntegrations && (
-        <section className="space-y-4 mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Mail className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Email (Global Admin)
-            </h2>
-            <div className="flex-1 h-px bg-border" />
+        <section className="space-y-6">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
+                <Mail className="size-4 text-slate-600 dark:text-slate-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Email (Global Admin)
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground ml-10">
+              Configurações unificadas de disparo de emails para o sistema.
+            </p>
           </div>
 
-          <ResendCard
-            initialApiKey={adminIntegrations.resend.apiKey ?? ''}
-            initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
-            initialFromEmail={adminIntegrations.resend.fromEmail ?? ''}
-            isConfigured={adminIntegrations.resend.isConfigured ?? false}
-          />
+          <div className="pl-0 md:pl-10">
+            <ResendCard
+              initialApiKey={adminIntegrations.resend.apiKey ?? ''}
+              initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
+              initialFromEmail={adminIntegrations.resend.fromEmail ?? ''}
+              isConfigured={adminIntegrations.resend.isConfigured ?? false}
+            />
+          </div>
         </section>
       )}
 
       {/* Section: Empresa integrations */}
       {selectedCompanyId && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <MessageSquare className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Comunicação (Empresa)
-            </h2>
-            <div className="flex-1 h-px bg-border" />
+        <section className="space-y-6">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+                <MessageSquare className="size-4 text-blue-600 dark:text-blue-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-foreground">
+                Comunicação (Empresa)
+              </h2>
+            </div>
+            <p className="text-sm text-muted-foreground ml-10">
+              Canais de atendimento e comunicação específicos da sua empresa.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <div className="pl-0 md:pl-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
             <WhatsappCard
               companyId={selectedCompanyId}
               initialStatus={whatsappState?.status ?? 'DISCONNECTED'}
