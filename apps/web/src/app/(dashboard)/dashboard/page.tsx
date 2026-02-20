@@ -1,11 +1,11 @@
 import { apiClient } from '@/lib/api';
-import { StatsCards } from './_components/stats-cards';
-import { CompaniesByMonthChart } from './_components/companies-by-month-chart';
-import { ServicesByRecurrenceChart } from './_components/services-by-recurrence-chart';
-import { TopCompaniesChart } from './_components/top-companies-chart';
+import { StatsCards } from '../_components/stats-cards';
+import { CompaniesByMonthChart } from '../_components/companies-by-month-chart';
+import { ServicesByRecurrenceChart } from '../_components/services-by-recurrence-chart';
+import { TopCompaniesChart } from '../_components/top-companies-chart';
 import { Breadcrumb } from '@/components/breadcrumb';
 import { LayoutDashboard } from 'lucide-react';
-import { ExpiringServicesWidget } from './_components/expiring-services-widget';
+import { ExpiringServicesWidget } from '../_components/expiring-services-widget';
 
 export type DashboardStats = {
   totals: { companies: number; customers: number; services: number };

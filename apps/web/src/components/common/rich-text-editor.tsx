@@ -37,10 +37,6 @@ export const RichTextEditor = forwardRef<MDXEditorMethods, RichTextEditorProps>(
       const formData = new FormData();
       formData.append('file', image);
       
-      // Allow relative or absolute URL. 
-      // If we are on the same domain/port as API (unlikely for separate apps), relative works.
-      // But typically API is on 3001 and Web on 3000.
-      
       const response = await fetch(`${API_URL}/storage/upload`, {
         method: 'POST',
         body: formData,
@@ -59,8 +55,7 @@ export const RichTextEditor = forwardRef<MDXEditorMethods, RichTextEditorProps>(
         <MDXEditor
           ref={ref}
           markdown={markdown}
-          onChange={onChange}
-          className="dark-theme" // Add class for dark mode if configured in CSS
+          onChange={onChange}         
           contentEditableClassName="prose dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-2"
           plugins={[
             headingsPlugin(),

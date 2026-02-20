@@ -128,10 +128,10 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
           <NavSection title="MENU" collapsed={collapsed}>
             {filterBySearch('Home') && (
               <NavItem
-                href="/"
+                href="/dashboard"
                 icon={Home}
                 label="Home"
-                isActive={pathname === '/'}
+                isActive={pathname === '/dashboard'}
                 collapsed={collapsed}
               />
             )}
