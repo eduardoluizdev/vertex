@@ -39,6 +39,12 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
     };
   }, [status, companyId]);
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('whatsapp-status-change'));
+    }
+  }, [status]);
+
   const handleCreateInstance = async () => {
     setLoading(true);
     const result = await createWhatsappInstance(companyId);

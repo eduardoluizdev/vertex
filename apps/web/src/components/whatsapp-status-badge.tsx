@@ -30,9 +30,16 @@ export function WhatsappStatusBadge({ companyId }: { companyId: string }) {
     // Check every 30 seconds globally
     interval = setInterval(checkStatus, 30000);
 
+    const handleStatusChange = () => {
+      checkStatus();
+    };
+
+    window.addEventListener('whatsapp-status-change', handleStatusChange);
+
     return () => {
       isMounted = false;
       clearInterval(interval);
+      window.removeEventListener('whatsapp-status-change', handleStatusChange);
     };
   }, [companyId]);
 
