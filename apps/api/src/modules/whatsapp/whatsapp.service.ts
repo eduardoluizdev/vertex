@@ -3,8 +3,8 @@ import { PrismaService } from '../../prisma.service';
 
 @Injectable()
 export class WhatsappService {
-  private readonly evolutionApiUrl = 'https://evo1.vertexhub.dev';
-  private readonly apiKey = '6TDJ3AwnACWraxMsepurlu5X';
+  private readonly evolutionApiUrl = process.env.EVOLUTION_API_URL!;
+  private readonly apiKey = process.env.EVOLUTION_API_KEY!;
 
   constructor(private readonly prisma: PrismaService) {}
 
