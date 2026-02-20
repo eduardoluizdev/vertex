@@ -20,9 +20,10 @@ export interface TestResult {
   message: string;
 }
 
-export async function getIntegrations(): Promise<IntegrationsData | null> {
+export async function getIntegrations(companyId?: string): Promise<IntegrationsData | null> {
   try {
-    const response = await apiClient('/v1/integrations', {
+    const url = companyId ? `/v1/integrations?companyId=${companyId}` : `/v1/integrations`;
+    const response = await apiClient(url, {
       cache: 'no-store',
     } as RequestInit);
 
@@ -33,7 +34,10 @@ export async function getIntegrations(): Promise<IntegrationsData | null> {
   }
 }
 
-export async function updateResendIntegration(formData: FormData): Promise<{
+export async function updateResendIntegration(
+  companyId: string | undefined,
+  formData: FormData
+): Promise<{
   success: boolean;
   message: string;
   data?: IntegrationsData;
@@ -54,7 +58,8 @@ export async function updateResendIntegration(formData: FormData): Promise<{
 
   try {
     // PATCH /v1/integrations/resend  — provider slug in the URL
-    const response = await apiClient('/v1/integrations/resend', {
+    const url = companyId ? `/v1/integrations/resend?companyId=${companyId}` : `/v1/integrations/resend`;
+    const response = await apiClient(url, {
       method: 'PATCH',
       body: JSON.stringify({ config }),
     });
@@ -76,10 +81,11 @@ export async function updateResendIntegration(formData: FormData): Promise<{
   }
 }
 
-export async function testResendConnection(): Promise<TestResult> {
+export async function testResendConnection(companyId?: string): Promise<TestResult> {
   try {
     // POST /v1/integrations/resend/test
-    const response = await apiClient('/v1/integrations/resend/test', {
+    const url = companyId ? `/v1/integrations/resend/test?companyId=${companyId}` : `/v1/integrations/resend/test`;
+    const response = await apiClient(url, {
       method: 'POST',
     });
 

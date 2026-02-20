@@ -13,7 +13,7 @@ export class CampaignsService {
     private readonly mailService: MailService,
   ) {}
 
-  async create(data: any) {
+  async create(companyId: string, data: any) {
     return this.prisma.campaign.create({
       data: {
         name: data.name,
@@ -22,25 +22,27 @@ export class CampaignsService {
         targetAudience: data.targetAudience, // Add targetAudience
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
         status: data.scheduledAt ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT,
+        companyId,
       },
     });
   }
 
-  async findAll() {
+  async findAll(companyId: string) {
     return this.prisma.campaign.findMany({
+      where: { companyId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string) {
+  async findOne(companyId: string, id: string) {
     return this.prisma.campaign.findUniqueOrThrow({
-      where: { id },
+      where: { id, companyId },
     });
   }
 
-  async update(id: string, data: any) {
+  async update(companyId: string, id: string, data: any) {
     return this.prisma.campaign.update({
-      where: { id },
+      where: { id, companyId },
       data: {
         name: data.name,
         subject: data.subject,
@@ -52,15 +54,15 @@ export class CampaignsService {
     });
   }
 
-  async remove(id: string) {
+  async remove(companyId: string, id: string) {
     return this.prisma.campaign.delete({
-      where: { id },
+      where: { id, companyId },
     });
   }
 
-  async sendCampaign(id: string) {
+  async sendCampaign(companyId: string, id: string) {
     const campaign = await this.prisma.campaign.findUnique({
-      where: { id },
+      where: { id, companyId },
     });
 
     if (!campaign) throw new Error('Campaign not found');
@@ -70,9 +72,11 @@ export class CampaignsService {
     // For mass sending, using a queue is better, but for now we iterate directly.
     
     // Filter customers based on targetAudience
+    // Filter customers based on targetAudience AND companyId
     const targetAudience = campaign.targetAudience;
     let customerFilter: any = {
       email: { not: '' },
+      companyId: companyId,
     };
 
     if (targetAudience === 'ACTIVE_CLIENTS') {
@@ -110,7 +114,7 @@ export class CampaignsService {
 
     for (const customer of customers) {
       try {
-        await this.mailService.sendHtmlEmail(customer.email, campaign.subject, campaign.content);
+        await this.mailService.sendHtmlEmail(customer.email, campaign.subject, campaign.content, campaign.companyId);
         successCount++;
       } catch (error) {
         failCount++;
@@ -144,7 +148,7 @@ export class CampaignsService {
 
     for (const campaign of campaigns) {
       this.logger.log(`Processing scheduled campaign: ${campaign.name}`);
-      await this.sendCampaign(campaign.id);
+      await this.sendCampaign(campaign.companyId, campaign.id);
     }
   }
 
@@ -201,7 +205,7 @@ export class CampaignsService {
       `;
 
       try {
-        await this.mailService.sendHtmlEmail(sub.customer.email, subject, html);
+        await this.mailService.sendHtmlEmail(sub.customer.email, subject, html, sub.customer.companyId);
       } catch (e) {
         this.logger.error(`Failed to send expiration email to ${sub.customer.email}`, e);
       }

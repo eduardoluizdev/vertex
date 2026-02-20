@@ -27,19 +27,21 @@ export class IntegrationsService {
 
   /**
    * Returns all integrations (one per provider).
-   * Resend API key is masked. Falls back to env vars when no DB row exists.
+   * Resend API key is masked. Falls back to env vars when no DB row exists (only for admin).
    */
-  async getIntegrations() {
-    const row = await this.prisma.integrationConfig.findUnique({
-      where: { provider: RESEND_PROVIDER },
+  async getIntegrations(companyId?: string) {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: RESEND_PROVIDER,
+        companyId: companyId || null,
+      },
     });
 
     const cfg = (row?.config ?? {}) as ResendConfig;
 
-    // Fallback to env vars if DB value is missing OR empty
-    // This fixes the issue where an empty string in DB blocked reading from .env
+    // Fallback to env vars if DB value is missing OR empty, but ONLY for admin (companyId is undefined/null)
     const dbApiKey = cfg.apiKey;
-    const apiKey = (dbApiKey && dbApiKey.length > 0) ? dbApiKey : (process.env.RESEND_API_KEY ?? '');
+    const apiKey = (dbApiKey && dbApiKey.length > 0) ? dbApiKey : (!companyId ? (process.env.RESEND_API_KEY ?? '') : '');
     
     const dbFrontendUrl = cfg.frontendUrl;
     const frontendUrl =
@@ -66,7 +68,7 @@ export class IntegrationsService {
    * Upserts the integration config for a given provider.
    * The config JSON is merged (patch semantics) so callers only send changed fields.
    */
-  async updateIntegrations(provider: string, dto: UpdateIntegrationsDto) {
+  async updateIntegrations(provider: string, dto: UpdateIntegrationsDto, companyId?: string) {
     // Validate Resend API key format when updating Resend config
     if (provider === RESEND_PROVIDER && dto.config?.apiKey) {
       const apiKey = dto.config.apiKey as string;
@@ -78,26 +80,36 @@ export class IntegrationsService {
     }
 
     // Merge the incoming config with whatever is already stored
-    const existing = await this.prisma.integrationConfig.findUnique({
-      where: { provider },
+    const resolvedCompanyId = companyId || null;
+    const existing = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider,
+        companyId: resolvedCompanyId,
+      },
     });
     const existingConfig = (existing?.config ?? {}) as Record<string, unknown>;
     const mergedConfig = { ...existingConfig, ...(dto.config ?? {}) };
 
-    await this.prisma.integrationConfig.upsert({
-      where: { provider },
-      create: {
-        provider,
-        name: dto.name ?? provider,
-        config: mergedConfig as any,
-        enabled: dto.enabled ?? true,
-      },
-      update: {
-        ...(dto.name !== undefined && { name: dto.name }),
-        ...(dto.enabled !== undefined && { enabled: dto.enabled }),
-        config: mergedConfig as any,
-      },
-    });
+    if (existing) {
+      await this.prisma.integrationConfig.update({
+        where: { id: existing.id },
+        data: {
+          ...(dto.name !== undefined && { name: dto.name }),
+          ...(dto.enabled !== undefined && { enabled: dto.enabled }),
+          config: mergedConfig as any,
+        },
+      });
+    } else {
+      await this.prisma.integrationConfig.create({
+        data: {
+          provider,
+          companyId: resolvedCompanyId,
+          name: dto.name ?? provider,
+          config: mergedConfig as any,
+          enabled: dto.enabled ?? true,
+        },
+      });
+    }
 
     this.logger.log(`Integration "${provider}" updated in database`);
 
@@ -107,13 +119,16 @@ export class IntegrationsService {
   /**
    * Tests the Resend connection using the key from DB (or env fallback).
    */
-  async testResendConnection(): Promise<{ success: boolean; message: string }> {
-    const row = await this.prisma.integrationConfig.findUnique({
-      where: { provider: RESEND_PROVIDER },
+  async testResendConnection(companyId?: string): Promise<{ success: boolean; message: string }> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: RESEND_PROVIDER,
+        companyId: companyId || null,
+      },
     });
 
     const cfg = (row?.config ?? {}) as ResendConfig;
-    const apiKey = cfg.apiKey ?? process.env.RESEND_API_KEY ?? '';
+    const apiKey = cfg.apiKey ?? (!companyId ? (process.env.RESEND_API_KEY ?? '') : '');
 
     if (!apiKey || !apiKey.startsWith('re_')) {
       return {

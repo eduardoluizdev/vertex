@@ -50,12 +50,12 @@ export class MailService {
     }
   }
 
-  async sendHtmlEmail(to: string, subject: string, html: string): Promise<void> {
-    const integrations = await this.integrationsService.getIntegrations();
+  async sendHtmlEmail(to: string, subject: string, html: string, companyId?: string): Promise<void> {
+    const integrations = await this.integrationsService.getIntegrations(companyId);
     const { apiKey, fromEmail } = integrations.resend;
 
     if (!apiKey || !apiKey.startsWith('re_')) {
-      this.logger.error('Resend API Key is missing or invalid.');
+      this.logger.error(`Resend API Key is missing or invalid for company ${companyId || 'ADMIN'}.`);
       throw new Error('Email service configuration error');
     }
 

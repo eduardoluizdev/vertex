@@ -21,6 +21,7 @@ interface ResendCardProps {
   initialFrontendUrl: string;
   initialFromEmail: string;
   isConfigured: boolean;
+  companyId?: string;
 }
 
 export function ResendCard({
@@ -28,6 +29,7 @@ export function ResendCard({
   initialFrontendUrl,
   initialFromEmail,
   isConfigured,
+  companyId,
 }: ResendCardProps) {
   const [showKey, setShowKey] = useState(false);
   // Initialize with the full key (which comes from backend now)
@@ -54,7 +56,7 @@ export function ResendCard({
 
     const formData = new FormData(e.currentTarget);
     startSave(async () => {
-      const result = await updateResendIntegration(formData);
+      const result = await updateResendIntegration(companyId, formData);
       setSaveResult(result);
       if (result.success && result.data) {
         // Update local state with the returned full data
@@ -69,7 +71,7 @@ export function ResendCard({
   async function handleTest() {
     setTestResult(null);
     startTest(async () => {
-      const result = await testResendConnection();
+      const result = await testResendConnection(companyId);
       setTestResult(result);
     });
   }

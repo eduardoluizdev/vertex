@@ -1,38 +1,42 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
-
-@Controller('campaigns')
+@ApiTags('campaigns')
+@ApiBearerAuth('jwt')
+@UseGuards(JwtAuthGuard)
+@Controller({ path: 'companies/:companyId/campaigns', version: '1' })
 export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) {}
 
   @Post()
-  create(@Body() createCampaignDto: any) {
-    return this.campaignsService.create(createCampaignDto);
+  create(@Param('companyId') companyId: string, @Body() createCampaignDto: any) {
+    return this.campaignsService.create(companyId, createCampaignDto);
   }
 
   @Get()
-  findAll() {
-    return this.campaignsService.findAll();
+  findAll(@Param('companyId') companyId: string) {
+    return this.campaignsService.findAll(companyId);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.campaignsService.findOne(id);
+  findOne(@Param('companyId') companyId: string, @Param('id') id: string) {
+    return this.campaignsService.findOne(companyId, id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateCampaignDto: any) {
-    return this.campaignsService.update(id, updateCampaignDto);
+  update(@Param('companyId') companyId: string, @Param('id') id: string, @Body() updateCampaignDto: any) {
+    return this.campaignsService.update(companyId, id, updateCampaignDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.campaignsService.remove(id);
+  remove(@Param('companyId') companyId: string, @Param('id') id: string) {
+    return this.campaignsService.remove(companyId, id);
   }
 
   @Post(':id/send')
-  send(@Param('id') id: string) {
-    return this.campaignsService.sendCampaign(id);
+  send(@Param('companyId') companyId: string, @Param('id') id: string) {
+    return this.campaignsService.sendCampaign(companyId, id);
   }
 }

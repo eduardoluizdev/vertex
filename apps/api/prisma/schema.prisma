@@ -84,6 +84,9 @@ model Company {
 
   customers Customer[]
   services Service[]
+  whatsappInstance WhatsappInstance?
+  integrationConfigs IntegrationConfig[]
+  campaigns Campaign[]
 }
 
 model Customer {
@@ -147,13 +150,17 @@ model Subscription {
 
 model IntegrationConfig {
   id        String   @id @default(uuid())
-  provider  String   @unique
+  provider  String   
   name      String
   config    Json     @default("{}")
   enabled   Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  companyId String?
+  company   Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, companyId])
   @@map("integration_configs")
 }
 
@@ -168,6 +175,9 @@ model Campaign {
   sentAt      DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
 }
 
 enum TargetAudience {
@@ -183,4 +193,20 @@ model NotificationTemplate {
   content   String   @db.Text
   isActive  Boolean  @default(true)
   updatedAt DateTime @updatedAt
+}
+
+model WhatsappInstance {
+  id              String   @id @default(uuid())
+  instanceName    String   @unique
+  status          String   @default("DISCONNECTED")
+  connectionState String?
+  qrcode          String?  @db.Text
+  
+  companyId       String   @unique
+  company         Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("whatsapp_instances")
 }

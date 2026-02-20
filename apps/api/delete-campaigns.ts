@@ -1,0 +1,1 @@
+import { PrismaClient } from './src/generated/prisma'; const prisma = new PrismaClient(); async function main() { await prisma.campaign.deleteMany(); console.log('DELETED CAMPAIGNS'); } main().catch(console.error).finally(() => prisma.$disconnect());

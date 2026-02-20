@@ -1,4 +1,5 @@
 import { NotificationBell } from '@/components/notifications/notification-bell';
+import { WhatsappStatusBadge } from '@/components/whatsapp-status-badge';
 import { Separator } from '@/components/ui/separator';
 
 interface TopbarProps {
@@ -14,6 +15,9 @@ export function Topbar({ selectedCompanyId }: TopbarProps) {
       </div>
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
+           {selectedCompanyId && (
+              <WhatsappStatusBadge companyId={selectedCompanyId} />
+           )}
            <NotificationBell companyId={selectedCompanyId} />
         </div>
       </div>

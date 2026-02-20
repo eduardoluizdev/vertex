@@ -5,6 +5,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -27,8 +28,8 @@ export class IntegrationsController {
     status: HttpStatus.OK,
     description: 'Returns current integration settings per provider',
   })
-  async getIntegrations() {
-    return this.integrationsService.getIntegrations();
+  async getIntegrations(@Query('companyId') companyId?: string) {
+    return this.integrationsService.getIntegrations(companyId);
   }
 
   @Patch(':provider')
@@ -40,8 +41,9 @@ export class IntegrationsController {
   updateIntegrations(
     @Param('provider') provider: string,
     @Body() dto: UpdateIntegrationsDto,
+    @Query('companyId') companyId?: string,
   ) {
-    return this.integrationsService.updateIntegrations(provider, dto);
+    return this.integrationsService.updateIntegrations(provider, dto, companyId);
   }
 
   @Post(':provider/test')
@@ -51,9 +53,12 @@ export class IntegrationsController {
     status: HttpStatus.OK,
     description: 'Returns connection test result',
   })
-  testIntegration(@Param('provider') provider: string) {
+  testIntegration(
+    @Param('provider') provider: string,
+    @Query('companyId') companyId?: string,
+  ) {
     if (provider === 'resend') {
-      return this.integrationsService.testResendConnection();
+      return this.integrationsService.testResendConnection(companyId);
     }
     return { success: false, message: `Teste não implementado para "${provider}".` };
   }
