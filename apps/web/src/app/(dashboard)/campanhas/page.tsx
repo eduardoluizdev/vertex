@@ -5,23 +5,44 @@ import { Plus, Mail } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Breadcrumb } from '@/components/breadcrumb';
+
+const statusMap: Record<string, string> = {
+  DRAFT: 'Rascunho',
+  SCHEDULED: 'Agendado',
+  SENT: 'Enviado',
+  FAILED: 'Falha',
+  CANCELLED: 'Cancelado',
+};
 
 export default async function CampaignsPage() {
   const campaigns = await getCampaigns();
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Campanhas de Email</h1>
-        <Button asChild>
-          <Link href="/campanhas/novo">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Campanha
-          </Link>
-        </Button>
+    <div className="p-6 space-y-6">
+      <Breadcrumb
+        items={[{ label: 'Campanhas', icon: Mail }]}
+      />
+
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-blue-500/10 to-emerald-500/10 rounded-2xl blur-2xl" />
+        <div className="relative glass-strong rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Campanhas de Email</h1>
+            <p className="text-muted-foreground mt-1">
+              Gerencie e dispare suas campanhas
+            </p>
+          </div>
+          <Button asChild>
+            <Link href="/campanhas/novo">
+              <Plus className="mr-2 h-4 w-4" />
+              Nova Campanha
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      <div className="rounded-md border">
+      <div className="rounded-md border bg-card">
         <div className="p-4">
            {campaigns.length === 0 ? (
                <div className="text-center py-10">
@@ -41,7 +62,7 @@ export default async function CampaignsPage() {
                                     campaign.status === 'SENT' ? 'default' : 
                                     campaign.status === 'SCHEDULED' ? 'secondary' : 'outline'
                                 }>
-                                    {campaign.status}
+                                    {statusMap[campaign.status] || campaign.status}
                                 </Badge>
                                 {campaign.scheduledAt && (
                                     <span className="text-xs text-muted-foreground my-auto">
