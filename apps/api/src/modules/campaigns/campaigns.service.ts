@@ -161,6 +161,10 @@ export class CampaignsService {
         }
 
         if (useWhatsapp && customer.phone) {
+          // Sanitize phone number to include country code
+          const numericPhone = customer.phone.replace(/\D/g, '');
+          const reqPhone = numericPhone.length === 10 || numericPhone.length === 11 ? `55${numericPhone}` : numericPhone;
+
           // Strip HTML tags for WhatsApp formatting
           // Also optionally handle <br> or <p> by replacing with newlines first
           const plainTextContent = campaign.content
@@ -169,7 +173,7 @@ export class CampaignsService {
             .replace(/<[^>]*>?/gm, '')
             .trim();
             
-          await this.whatsappService.sendMessage(campaign.companyId, customer.phone, plainTextContent);
+          await this.whatsappService.sendMessage(campaign.companyId, reqPhone, plainTextContent);
           sentAny = true;
         }
 

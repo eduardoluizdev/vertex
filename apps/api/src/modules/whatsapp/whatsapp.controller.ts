@@ -4,6 +4,7 @@ import {
   Get,
   Delete,
   Param,
+  Body,
   UseGuards,
   HttpStatus,
   HttpCode,
@@ -54,5 +55,14 @@ export class WhatsappController {
   @ApiResponse({ status: HttpStatus.OK, description: 'Check if number exists in WhatsApp' })
   validateNumber(@Param('companyId') companyId: string, @Param('number') number: string) {
     return this.whatsappService.validateNumber(companyId, number);
+  }
+
+  @Post('send-message/:companyId')
+  @ApiResponse({ status: HttpStatus.OK, description: 'Send a test WhatsApp message' })
+  sendMessage(
+    @Param('companyId') companyId: string,
+    @Body() body: { number: string; text: string }
+  ) {
+    return this.whatsappService.sendMessage(companyId, body.number, body.text);
   }
 }

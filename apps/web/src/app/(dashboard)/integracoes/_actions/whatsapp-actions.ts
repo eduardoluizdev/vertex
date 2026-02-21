@@ -83,3 +83,4 @@ export async function refreshWhatsappQRCode(companyId: string) {
     return { success: false, error: 'Erro ao gerar novo QR Code' };
   }
 }
+

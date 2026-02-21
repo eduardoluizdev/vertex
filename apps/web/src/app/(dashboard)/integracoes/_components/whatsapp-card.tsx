@@ -5,6 +5,8 @@ import { createWhatsappInstance, deleteWhatsappInstance, getWhatsappConnectionSt
 import { Button } from '@/components/ui/button';
 import { Loader2, QrCode as QrCodeIcon, MessageCircle, AlertCircle, RefreshCw, Trash2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { Input } from '@/components/ui/input';
+import { fetchClient } from '@/lib/fetch-client';
 
 interface WhatsappCardProps {
   companyId: string;
@@ -19,6 +21,9 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
   const [status, setStatus] = useState(initialStatus);
   const [qrcode, setQrcode] = useState(initialQrcode);
   const [instanceName, setInstanceName] = useState(initialInstanceName);
+  const [testNumber, setTestNumber] = useState('');
+  const [testMessage, setTestMessage] = useState('Mensagem de Teste');
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -108,6 +113,35 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
     setIsRefreshing(false);
   };
 
+  const handleTestMessage = async () => {
+    if (!testNumber) {
+      toast.error('Informe um número de telefone com DDD (ex: 11999999999)');
+      return;
+    }
+    setTesting(true);
+    const numericNumber = testNumber.replace(/\D/g, '');
+    const reqPhone = numericNumber.length === 10 || numericNumber.length === 11 ? `55${numericNumber}` : numericNumber;
+
+    try {
+      const response = await fetchClient(`/v1/whatsapp/send-message/${companyId}`, {
+        method: 'POST',
+        body: JSON.stringify({ number: reqPhone, text: testMessage }),
+      });
+
+      if (response.ok) {
+        toast.success('Mensagem de teste enviada!');
+        setTestNumber('');
+      } else {
+        const error = await response.text();
+        toast.error(`Falha ao enviar: ${error}`);
+      }
+    } catch (e: any) {
+      toast.error(`Erro: ${e.message}`);
+    } finally {
+      setTesting(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md">
       {/* Card Header */}
@@ -177,20 +211,43 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
       </div>
 
       {status === 'CONNECTED' && (
-        <div className="p-6 bg-muted/10 border-t border-border/50 flex items-center justify-between">
-            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-              <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10">
-                <CheckCircle2 className="size-4 text-emerald-500" />
+        <div className="flex flex-col border-t border-border/50">
+          <div className="p-6 bg-muted/10 flex items-center justify-between">
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10">
+                  <CheckCircle2 className="size-4 text-emerald-500" />
+                </div>
+                <div>
+                  <span className="font-medium text-foreground block">Tudo pronto!</span>
+                  Sua conexão está ativa e pronta para enviar mensagens.
+                </div>
               </div>
-              <div>
-                <span className="font-medium text-foreground block">Tudo pronto!</span>
-                Sua conexão está ativa e pronta para enviar mensagens.
-              </div>
+              <Button variant="destructive" size="sm" onClick={handleDisconnect} disabled={loading} className="gap-2">
+                {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                Desconectar
+              </Button>
+          </div>
+
+          <div className="p-6 bg-card border-t border-border/50">
+            <h4 className="text-sm font-semibold mb-3">Teste Rápido de Envio</h4>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Input
+                placeholder="Número (Ex: 11999999999)"
+                value={testNumber}
+                onChange={(e) => setTestNumber(e.target.value)}
+                className="max-w-[200px]"
+              />
+              <Input
+                placeholder="Mensagem"
+                value={testMessage}
+                onChange={(e) => setTestMessage(e.target.value)}
+                className="flex-1"
+              />
+              <Button onClick={handleTestMessage} disabled={testing || !testNumber}>
+                {testing ? <Loader2 className="size-4 animate-spin" /> : 'Enviar Teste'}
+              </Button>
             </div>
-            <Button variant="destructive" size="sm" onClick={handleDisconnect} disabled={loading} className="gap-2">
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              Desconectar
-            </Button>
+          </div>
         </div>
       )}
 
