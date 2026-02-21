@@ -28,20 +28,31 @@ import {
 
 const campaignSchema = z.object({
   name: z.string().min(1, 'Nome da campanha é obrigatório'),
-  subject: z.string().min(1, 'Assunto é obrigatório'),
+  subject: z.string().optional(),
   content: z.string().min(1, 'Conteúdo é obrigatório'),
   scheduledAt: z.string().optional(),
-  targetAudience: z.enum(['ALL', 'ACTIVE_CLIENTS', 'INACTIVE_CLIENTS']).default('ALL'),
+  targetAudience: z.enum(['ALL', 'ACTIVE_CLIENTS', 'INACTIVE_CLIENTS', 'SPECIFIC_CLIENTS']).default('ALL'),
+  channels: z.array(z.enum(['EMAIL', 'WHATSAPP'])).min(1, 'Selecione pelo menos um canal de envio'),
+  customerIds: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.channels.includes('EMAIL') && (!data.subject || data.subject.trim() === '')) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: 'Assunto é obrigatório para envio por Email',
+      path: ['subject'],
+    });
+  }
 });
 
 type CampaignFormValues = z.infer<typeof campaignSchema>;
 
 interface CampaignFormProps {
   initialData?: any;
+  customers: { id: string; name: string; email: string; phone?: string }[];
   action: (data: CampaignFormValues) => Promise<any>;
 }
 
-export function CampaignForm({ initialData, action }: CampaignFormProps) {
+export function CampaignForm({ initialData, customers, action }: CampaignFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -52,14 +63,25 @@ export function CampaignForm({ initialData, action }: CampaignFormProps) {
       subject: initialData?.subject || '',
       content: initialData?.content || '',
       scheduledAt: initialData?.scheduledAt ? new Date(initialData.scheduledAt).toISOString().slice(0, 16) : '',
+      channels: initialData?.channels || ['EMAIL'],
       targetAudience: initialData?.targetAudience || 'ALL',
+      customerIds: initialData?.customers?.map((c: any) => c.id) || [],
     },
   });
+
+  const targetAudience = form.watch('targetAudience');
+  const selectedChannels = form.watch('channels');
+  const isEmailSelected = selectedChannels?.includes('EMAIL');
 
   async function onSubmit(data: CampaignFormValues) {
     setLoading(true);
     try {
-      await action(data);
+      const payload = { ...data };
+      if (!payload.channels.includes('EMAIL') && !payload.subject) {
+        payload.subject = payload.name; // fallback para banco de dados
+      }
+
+      await action(payload);
       toast.success('Campanha salva com sucesso!');
       router.push('/campanhas');
       router.refresh();
@@ -87,6 +109,81 @@ export function CampaignForm({ initialData, action }: CampaignFormProps) {
             </FormItem>
           )}
         />
+
+        <FormField
+          control={form.control}
+          name="channels"
+          render={() => (
+            <FormItem>
+              <div className="mb-2">
+                <FormLabel className="text-base">Canais de Envio</FormLabel>
+              </div>
+              <div className="flex flex-row gap-4">
+                <FormField
+                  control={form.control}
+                  name="channels"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        key="EMAIL"
+                        className="flex flex-row items-start space-x-3 space-y-0"
+                      >
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            checked={field.value?.includes('EMAIL')}
+                            onChange={(e) => {
+                              const current = field.value || [];
+                              const updated = e.target.checked
+                                ? [...current, 'EMAIL']
+                                : current.filter((value: string) => value !== 'EMAIL');
+                              field.onChange(updated);
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">
+                          Email
+                        </FormLabel>
+                      </FormItem>
+                    )
+                  }}
+                />
+                <FormField
+                  control={form.control}
+                  name="channels"
+                  render={({ field }) => {
+                    return (
+                      <FormItem
+                        key="WHATSAPP"
+                        className="flex flex-row items-start space-x-3 space-y-0"
+                      >
+                        <FormControl>
+                          <input
+                            type="checkbox"
+                            className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                            checked={field.value?.includes('WHATSAPP')}
+                            onChange={(e) => {
+                              const current = field.value || [];
+                              const updated = e.target.checked
+                                ? [...current, 'WHATSAPP']
+                                : current.filter((value: string) => value !== 'WHATSAPP');
+                              field.onChange(updated);
+                            }}
+                          />
+                        </FormControl>
+                        <FormLabel className="font-normal cursor-pointer">
+                          WhatsApp
+                        </FormLabel>
+                      </FormItem>
+                    )
+                  }}
+                />
+              </div>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         
         <FormField
           control={form.control}
@@ -104,6 +201,7 @@ export function CampaignForm({ initialData, action }: CampaignFormProps) {
                   <SelectItem value="ALL">Todos os Clientes</SelectItem>
                   <SelectItem value="ACTIVE_CLIENTS">Clientes Ativos (Com serviços)</SelectItem>
                   <SelectItem value="INACTIVE_CLIENTS">Clientes Inativos (Sem serviços)</SelectItem>
+                  <SelectItem value="SPECIFIC_CLIENTS">Clientes Específicos</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -111,19 +209,81 @@ export function CampaignForm({ initialData, action }: CampaignFormProps) {
           )}
         />
 
-        <FormField
-          control={form.control}
-          name="subject"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Assunto do Email</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: Confira nossas ofertas..." {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {targetAudience === 'SPECIFIC_CLIENTS' && (
+          <FormField
+            control={form.control}
+            name="customerIds"
+            render={() => (
+              <FormItem className="border rounded-md p-4">
+                <FormLabel className="text-base">Selecione os Clientes</FormLabel>
+                <FormDescription>
+                  Selecione os clientes que devem receber esta campanha.
+                </FormDescription>
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-60 overflow-y-auto pr-2">
+                  {customers.map((customer) => (
+                    <FormField
+                      key={customer.id}
+                      control={form.control}
+                      name="customerIds"
+                      render={({ field }) => {
+                        const isChecked = field.value?.includes(customer.id) || false;
+                        return (
+                          <FormItem
+                            key={customer.id}
+                            className={`flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 transition-colors ${isChecked ? 'bg-primary/5 border-primary/50' : 'bg-card'}`}
+                          >
+                            <FormControl>
+                              <input
+                                type="checkbox"
+                                className="mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary disabled:cursor-not-allowed disabled:opacity-50"
+                                checked={isChecked}
+                                onChange={(e) => {
+                                  const current = field.value || [];
+                                  const updated = e.target.checked
+                                    ? [...current, customer.id]
+                                    : current.filter((value) => value !== customer.id);
+                                  field.onChange(updated);
+                                }}
+                              />
+                            </FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="font-medium cursor-pointer">
+                                {customer.name}
+                              </FormLabel>
+                              <p className="text-xs text-muted-foreground">
+                                {customer.email} {customer.phone && `• ${customer.phone}`}
+                              </p>
+                            </div>
+                          </FormItem>
+                        );
+                      }}
+                    />
+                  ))}
+                  {customers.length === 0 && (
+                     <p className="text-sm text-muted-foreground col-span-full">Nenhum cliente cadastrado com email/telefone.</p>
+                  )}
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {isEmailSelected && (
+          <FormField
+            control={form.control}
+            name="subject"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Assunto do Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: Confira nossas ofertas..." {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <FormField
           control={form.control}

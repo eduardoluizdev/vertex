@@ -44,6 +44,7 @@ export default async function EditarClientePage({ params }: EditarClientePagePro
             name: customer.name,
             email: customer.email,
             phone: customer.phone ?? '',
+            website: customer.website ?? '',
             document: customer.document ?? '',
             personType: customer.personType,
             zip: customer.zip ?? '',

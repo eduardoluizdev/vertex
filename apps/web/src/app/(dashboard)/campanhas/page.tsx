@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getCampaigns } from './_actions/campaign-actions';
-import { Plus, Mail } from 'lucide-react';
+import { Plus, Mail, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -28,9 +28,9 @@ export default async function CampaignsPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-blue-500/10 to-emerald-500/10 rounded-2xl blur-2xl" />
         <div className="relative glass-strong rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Campanhas de Email</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Campanhas</h1>
             <p className="text-muted-foreground mt-1">
-              Gerencie e dispare suas campanhas
+              Gerencie e dispare suas campanhas (Email e WhatsApp)
             </p>
           </div>
           <Button asChild>
@@ -57,13 +57,19 @@ export default async function CampaignsPage() {
                         <div>
                             <h3 className="font-semibold text-lg">{campaign.name}</h3>
                             <p className="text-sm text-muted-foreground">{campaign.subject}</p>
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex gap-2 mt-2 items-center flex-wrap">
                                 <Badge variant={
                                     campaign.status === 'SENT' ? 'default' : 
                                     campaign.status === 'SCHEDULED' ? 'secondary' : 'outline'
                                 }>
                                     {statusMap[campaign.status] || campaign.status}
                                 </Badge>
+                                {campaign.channels?.includes('EMAIL') && (
+                                    <Badge variant="outline" className="px-1.5"><Mail className="h-3 w-3 mr-1"/> Email</Badge>
+                                )}
+                                {campaign.channels?.includes('WHATSAPP') && (
+                                    <Badge variant="outline" className="px-1.5"><MessageCircle className="h-3 w-3 mr-1"/> WhatsApp</Badge>
+                                )}
                                 {campaign.scheduledAt && (
                                     <span className="text-xs text-muted-foreground my-auto">
                                         Agendado: {format(new Date(campaign.scheduledAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}

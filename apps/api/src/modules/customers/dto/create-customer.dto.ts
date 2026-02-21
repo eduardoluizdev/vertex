@@ -40,6 +40,11 @@ export class CreateCustomerDto {
   @IsString()
   phone?: string;
 
+  @ApiPropertyOptional({ example: 'https://exemplo.com.br' })
+  @IsOptional()
+  @IsString()
+  website?: string;
+
   @ApiPropertyOptional({ example: '01001-000' })
   @IsOptional()
   @IsString()

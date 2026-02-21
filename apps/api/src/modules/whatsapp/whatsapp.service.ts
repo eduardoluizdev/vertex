@@ -221,4 +221,126 @@ export class WhatsappService {
       throw new InternalServerErrorException('Failed to delete instance');
     }
   }
+
+  async validateNumber(companyId: string, number: string) {
+    const instance = await this.prisma.whatsappInstance.findUnique({
+      where: { companyId },
+    });
+
+    if (!instance || instance.status !== 'CONNECTED') {
+      throw new Error('WhatsApp not connected');
+    }
+
+    try {
+      const response = await fetch(`${this.evolutionApiUrl}/chat/whatsappNumbers/${instance.instanceName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ numbers: [number] }),
+      });
+
+      const data = await response.json();
+      return Array.isArray(data) && data.length > 0 ? data[0] : { exists: false };
+    } catch (error) {
+      console.error('[validateNumber] Error:', error);
+      throw new InternalServerErrorException('Failed to validate WhatsApp number');
+    }
+  }
+
+  async getContacts(companyId: string) {
+    const instance = await this.prisma.whatsappInstance.findUnique({
+      where: { companyId },
+    });
+
+    if (!instance || instance.status !== 'CONNECTED') {
+      throw new Error('WhatsApp not connected');
+    }
+
+    try {
+      const response = await fetch(`${this.evolutionApiUrl}/chat/findContacts/${instance.instanceName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ where: {} }),
+      });
+
+      const data = await response.json();
+      
+      if (!Array.isArray(data)) {
+        return [];
+      }
+      
+      // Evolution API return contacts in the FindContacts method. We filter out groups, broadcasts,
+      // and internal linked device IDs (@lid) which are not real phone numbers. 
+      // Individual users always have the @s.whatsapp.net suffix.
+      const mapped = data
+        .filter((c: any) => c.id)
+        .map((c: any) => {
+          // Identify the raw ID (Evolution sometimes uses remoteJid, or just id)
+          const rawId = c.remoteJid || c.id;
+          // Extract just the phone number part (everything before the @)
+          const numberPart = rawId ? rawId.split('@')[0] : '';
+          // Ensure it's only digits to avoid breaking the frontend mask
+          const cleanNumber = numberPart.replace(/\D/g, '');
+
+          return {
+            id: c.id,
+            number: cleanNumber,
+            name: c.pushName || c.name || 'Desconhecido',
+            profilePictureUrl: c.profilePictureUrl || null,
+            isGroup: false, // We already filtered them out
+          };
+        });
+
+      // Deduplicate by ID since Evolution API might return multiple records for the same contact
+      const uniqueContacts = [];
+      const seenIds = new Set();
+      for (const contact of mapped) {
+        if (!seenIds.has(contact.id)) {
+          seenIds.add(contact.id);
+          uniqueContacts.push(contact);
+        }
+      }
+
+      return uniqueContacts;
+    } catch (error) {
+       console.error('[getContacts] Error:', error);
+       throw new InternalServerErrorException('Failed to get WhatsApp contacts');
+    }
+  }
+
+  async sendMessage(companyId: string, number: string, text: string) {
+    const instance = await this.prisma.whatsappInstance.findUnique({
+      where: { companyId },
+    });
+
+    if (!instance || instance.status !== 'CONNECTED') {
+      throw new Error('WhatsApp not connected');
+    }
+
+    try {
+      const response = await fetch(`${this.evolutionApiUrl}/message/sendText/${instance.instanceName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': this.apiKey,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          number,
+          text,
+          delay: 1200,
+        }),
+      });
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('[sendMessage] Error:', error);
+      throw new InternalServerErrorException('Failed to send WhatsApp message');
+    }
+  }
 }

@@ -43,6 +43,11 @@ enum NotificationType {
   EXPIRATION_WARNING
 }
 
+enum CampaignChannel {
+  EMAIL
+  WHATSAPP
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -94,6 +99,7 @@ model Customer {
   name      String
   email     String   @unique
   phone        String?
+  website      String?
   zip          String?
   street       String?
   neighborhood String?
@@ -113,6 +119,7 @@ model Customer {
   company   Company  @relation(fields: [companyId], references: [id])
 
   services Subscription[]
+  campaigns Campaign[]
 }
 
 model Service {
@@ -171,6 +178,7 @@ model Campaign {
   content     String   @db.Text
   status      CampaignStatus @default(DRAFT)
   targetAudience TargetAudience @default(ALL)
+  channels    CampaignChannel[] @default([EMAIL])
   scheduledAt DateTime?
   sentAt      DateTime?
   createdAt   DateTime @default(now())
@@ -178,12 +186,15 @@ model Campaign {
 
   companyId   String
   company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  
+  customers   Customer[]
 }
 
 enum TargetAudience {
   ALL
   ACTIVE_CLIENTS
   INACTIVE_CLIENTS
+  SPECIFIC_CLIENTS
 }
 
 model NotificationTemplate {

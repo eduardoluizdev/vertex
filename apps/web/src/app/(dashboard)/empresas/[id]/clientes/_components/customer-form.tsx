@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { MaskedInput } from '@/components/ui/masked-input';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Form,
   FormControl,
@@ -27,11 +28,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Search, CheckCircle2, XCircle, Users } from 'lucide-react';
+import { useState } from 'react';
 
 const customerSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
   email: z.string().email('Email inválido'),
   phone: z.string().optional(),
+  website: z.string().optional(),
   document: z.string().optional(),
   personType: z.enum(['INDIVIDUAL', 'COMPANY'], {
     message: 'Tipo de pessoa é obrigatório',
@@ -75,6 +85,22 @@ export function CustomerForm({
 }: CustomerFormProps) {
   const router = useRouter();
   const isEditing = !!customerId;
+  const [isValidatingPhone, setIsValidatingPhone] = useState(false);
+  const [phoneStatus, setPhoneStatus] = useState<'idle' | 'valid' | 'invalid'>('idle');
+  const [showContacts, setShowContacts] = useState(false);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredContacts = contacts.filter((contact) => {
+    if (!searchQuery.trim()) return true;
+    const searchLower = searchQuery.toLowerCase();
+    const searchDigits = searchQuery.replace(/\D/g, '');
+    return (
+      contact.name?.toLowerCase().includes(searchLower) ||
+      (searchDigits ? contact.number?.includes(searchDigits) : false)
+    );
+  });
 
   const form = useForm<CustomerFormValues>({
     resolver: zodResolver(customerSchema),
@@ -82,6 +108,7 @@ export function CustomerForm({
       name: '',
       email: '',
       phone: '',
+      website: '',
       document: '',
       personType: 'INDIVIDUAL',
       zip: '',
@@ -153,6 +180,62 @@ export function CustomerForm({
     }
   }
 
+  async function validatePhone() {
+    const phone = form.getValues('phone');
+    if (!phone || phone.replace(/\D/g, '').length < 10) {
+       toast.error('Preencha um telefone válido antes de validar');
+       return;
+    }
+    setIsValidatingPhone(true);
+    try {
+       const numericPhone = phone.replace(/\D/g, '');
+       const reqPhone = numericPhone.length === 10 || numericPhone.length === 11 ? `55${numericPhone}` : numericPhone;
+       const response = await fetchClient(`/v1/whatsapp/validate-number/${companyId}/${reqPhone}`);
+       if (!response.ok) throw new Error('Falha ao validar');
+       const data = await response.json();
+       if (data.exists) {
+          setPhoneStatus('valid');
+          toast.success('Número possui WhatsApp!');
+       } else {
+          setPhoneStatus('invalid');
+          toast.error('Número não possui WhatsApp');
+       }
+    } catch (error) {
+       toast.error('Erro ao validar ou WhatsApp não conectado');
+       setPhoneStatus('idle');
+    } finally {
+       setIsValidatingPhone(false);
+    }
+  }
+
+  async function loadContacts() {
+    setSearchQuery('');
+    setShowContacts(true);
+    setIsLoadingContacts(true);
+    try {
+       const res = await fetchClient(`/v1/whatsapp/contacts/${companyId}`);
+       if (!res.ok) throw new Error();
+       const data = await res.json();
+       setContacts(data);
+    } catch (e) {
+       toast.error('Erro ao carregar contatos. Verifique se o WhatsApp está conectado.');
+       setShowContacts(false);
+    } finally {
+       setIsLoadingContacts(false);
+    }
+  }
+
+  function handleSelectContact(contact: any) {
+    if (contact.name && contact.name !== 'Desconhecido') {
+        form.setValue('name', contact.name);
+    }
+    let phoneStr = contact.number;
+    if (phoneStr.startsWith('55')) phoneStr = phoneStr.slice(2);
+    form.setValue('phone', maskPhone(phoneStr));
+    setPhoneStatus('valid');
+    setShowContacts(false);
+  }
+
   const documentMask = useCallback(
     (value: string) => maskDocument(value, personType),
     [personType],
@@ -174,8 +257,22 @@ export function CustomerForm({
   };
 
   return (
+    <>
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {!isEditing && (
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-muted/30 p-4 rounded-lg border border-dashed border-primary/20 gap-4">
+              <div>
+                 <h3 className="font-medium">Cadastro Rápido via WhatsApp</h3>
+                 <p className="text-sm text-muted-foreground">Importe os dados de um contato já conectado na sua instância.</p>
+              </div>
+              <Button type="button" variant="secondary" onClick={loadContacts} disabled={isLoadingContacts}>
+                 <Users className="size-4 mr-2" />
+                 {isLoadingContacts ? 'Carregando...' : 'Buscar Contatos'}
+              </Button>
+          </div>
+        )}
+
         <div className="grid gap-6 md:grid-cols-2">
           {/* ... existing fields ... */}
           <FormField
@@ -210,12 +307,45 @@ export function CustomerForm({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Telefone</FormLabel>
+                <div className="flex gap-2">
+                  <FormControl>
+                    <MaskedInput
+                      mask={maskPhone}
+                      placeholder="(11) 99999-9999"
+                      {...field}
+                      onChange={(e) => {
+                         field.onChange(e);
+                         setPhoneStatus('idle');
+                      }}
+                    />
+                  </FormControl>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon" 
+                    onClick={validatePhone}
+                    disabled={isValidatingPhone}
+                    title="Validar WhatsApp"
+                  >
+                     {isValidatingPhone ? <span className="animate-spin text-xs">...</span> : 
+                       phoneStatus === 'valid' ? <CheckCircle2 className="size-4 text-emerald-500" /> :
+                       phoneStatus === 'invalid' ? <XCircle className="size-4 text-red-500" /> :
+                       <Search className="size-4" />
+                     }
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="website"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Website</FormLabel>
                 <FormControl>
-                  <MaskedInput
-                    mask={maskPhone}
-                    placeholder="(11) 99999-9999"
-                    {...field}
-                  />
+                  <Input placeholder="https://exemplo.com.br" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -501,5 +631,63 @@ export function CustomerForm({
         </div>
       </form>
     </Form>
+
+    <Dialog open={showContacts} onOpenChange={setShowContacts}>
+       <DialogContent className="max-w-md">
+          <DialogHeader>
+             <DialogTitle>Contatos do WhatsApp</DialogTitle>
+          </DialogHeader>
+
+          <div className="px-1 pt-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar contato..."
+                className="pl-9"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2 mt-2 max-h-[60vh] overflow-y-auto pr-2">
+             {isLoadingContacts && (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                   Buscando contatos na API...
+                </div>
+             )}
+             {!isLoadingContacts && contacts.length === 0 && (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                   Nenhum contato encontrado ou WhatsApp desconectado.
+                </div>
+             )}
+             {!isLoadingContacts && contacts.length > 0 && filteredContacts.length === 0 && (
+                <div className="py-8 text-center text-sm text-muted-foreground">
+                   Nenhum contato correspondente à busca.
+                </div>
+             )}
+             {!isLoadingContacts && filteredContacts.map(contact => (
+                <div key={contact.id} className="flex flex-row items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                   <div className="flex flex-row items-center gap-3">
+                     <Avatar className="h-10 w-10">
+                       <AvatarImage src={contact.profilePictureUrl || ''} />
+                       <AvatarFallback className="bg-primary/10 text-primary">
+                         {contact.name.charAt(0).toUpperCase()}
+                       </AvatarFallback>
+                     </Avatar>
+                     <div className="flex flex-col">
+                        <span className="font-medium text-sm">{contact.name}</span>
+                        <span className="text-xs text-muted-foreground">{maskPhone(contact.number.startsWith('55') ? contact.number.slice(2) : contact.number) || contact.number}</span>
+                     </div>
+                   </div>
+                   <Button size="sm" variant="secondary" onClick={() => handleSelectContact(contact)}>
+                      Selecionar
+                   </Button>
+                </div>
+             ))}
+          </div>
+       </DialogContent>
+    </Dialog>
+    </>
   );
 }

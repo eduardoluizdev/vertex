@@ -18,6 +18,7 @@ export type Customer = {
   name: string;
   email: string;
   phone: string | null;
+  website: string | null;
   document: string | null;
   personType: 'INDIVIDUAL' | 'COMPANY';
   _count: {
@@ -70,6 +71,25 @@ export function getColumns(
           {maskPhone(row.original.phone ?? '') || '—'}
         </span>
       ),
+    },
+    {
+      accessorKey: 'website',
+      header: 'Website',
+      cell: ({ row }) => {
+        const website = row.original.website;
+        if (!website) return <span className="text-muted-foreground">—</span>;
+        
+        return (
+          <a
+            href={website.startsWith('http') ? website : `https://${website}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {website.replace(/^https?:\/\//, '')}
+          </a>
+        );
+      },
     },
     {
       accessorKey: 'personType',

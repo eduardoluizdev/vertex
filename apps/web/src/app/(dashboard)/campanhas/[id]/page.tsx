@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Send, Mail, Edit, Plus } from 'lucide-react';
 import { Breadcrumb } from '@/components/breadcrumb';
+import { getSelectedCompanyId } from '@/lib/cookies';
+import { apiClient } from '@/lib/api';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -12,6 +14,15 @@ interface PageProps {
 export default async function CampaignEditPage({ params }: PageProps) {
   const { id } = await params;
   const isNew = id === 'novo';
+  const companyId = await getSelectedCompanyId();
+  
+  let customers = [];
+  if (companyId) {
+    const response = await apiClient(`/v1/companies/${companyId}/customers`);
+    if (response.ok) {
+        customers = await response.json();
+    }
+  }
   
   let initialData = null;
   if (!isNew) {
@@ -65,7 +76,7 @@ export default async function CampaignEditPage({ params }: PageProps) {
       </div>
 
       <div className="border rounded-lg p-6 bg-card">
-        <CampaignForm initialData={initialData} action={handleSave} />
+        <CampaignForm initialData={initialData} action={handleSave} customers={customers} />
       </div>
     </div>
   );

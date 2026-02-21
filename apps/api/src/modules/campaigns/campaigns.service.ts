@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { MailService } from '../mail/mail.service';
+import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { CampaignStatus } from 'src/generated/prisma/enums';
 
@@ -11,6 +12,7 @@ export class CampaignsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly mailService: MailService,
+    private readonly whatsappService: WhatsappService,
   ) {}
 
   async create(companyId: string, data: any) {
@@ -19,10 +21,16 @@ export class CampaignsService {
         name: data.name,
         subject: data.subject,
         content: data.content,
-        targetAudience: data.targetAudience, // Add targetAudience
+        targetAudience: data.targetAudience,
+        channels: data.channels || ['EMAIL'],
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : null,
         status: data.scheduledAt ? CampaignStatus.SCHEDULED : CampaignStatus.DRAFT,
         companyId,
+        ...(data.targetAudience === 'SPECIFIC_CLIENTS' && data.customerIds?.length > 0 && {
+          customers: {
+            connect: data.customerIds.map((id: string) => ({ id })),
+          },
+        }),
       },
     });
   }
@@ -47,9 +55,20 @@ export class CampaignsService {
         name: data.name,
         subject: data.subject,
         content: data.content,
-        targetAudience: data.targetAudience, // Add targetAudience
+        targetAudience: data.targetAudience,
+        channels: data.channels || undefined,
         scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
-        status: data.status, // Allow manual status update if needed
+        status: data.status,
+        ...(data.targetAudience === 'SPECIFIC_CLIENTS' && data.customerIds && {
+          customers: {
+            set: data.customerIds.map((custId: string) => ({ id: custId })),
+          },
+        }),
+        ...(data.targetAudience !== 'SPECIFIC_CLIENTS' && {
+          customers: {
+            set: [],
+          },
+        }),
       },
     });
   }
@@ -74,30 +93,47 @@ export class CampaignsService {
     // Filter customers based on targetAudience
     // Filter customers based on targetAudience AND companyId
     const targetAudience = campaign.targetAudience;
-    let customerFilter: any = {
-      email: { not: '' },
-      companyId: companyId,
-    };
+    let customers: any[] = [];
 
-    if (targetAudience === 'ACTIVE_CLIENTS') {
-      // Customers with at least one active subscription (recurrenceDay is set)
-      // simplified logic: check if they have services
-      customerFilter = {
-        ...customerFilter,
-        services: { some: {} },
+    if (targetAudience === 'SPECIFIC_CLIENTS') {
+      const campaignWithCustomers = await this.prisma.campaign.findUnique({
+        where: { id },
+        include: { customers: { select: { email: true, name: true, phone: true } } }
+      });
+      customers = campaignWithCustomers?.customers || [];
+    } else {
+      let customerFilter: any = {
+        companyId: companyId,
       };
-    } else if (targetAudience === 'INACTIVE_CLIENTS') {
-      // Customers with no active services
-      customerFilter = {
-        ...customerFilter,
-        services: { none: {} },
-      };
+
+      const hasEmail = campaign.channels?.includes('EMAIL') ?? true;
+      const hasWhatsapp = campaign.channels?.includes('WHATSAPP');
+
+      if (hasEmail && hasWhatsapp) {
+        customerFilter.OR = [{ email: { not: '' } }, { phone: { not: null } }];
+      } else if (hasEmail) {
+        customerFilter.email = { not: '' };
+      } else if (hasWhatsapp) {
+        customerFilter.phone = { not: null };
+      }
+
+      if (targetAudience === 'ACTIVE_CLIENTS') {
+        customerFilter = {
+          ...customerFilter,
+          services: { some: {} },
+        };
+      } else if (targetAudience === 'INACTIVE_CLIENTS') {
+        customerFilter = {
+          ...customerFilter,
+          services: { none: {} },
+        };
+      }
+
+      customers = await this.prisma.customer.findMany({
+        where: customerFilter,
+        select: { email: true, name: true, phone: true },
+      });
     }
-
-    const customers = await this.prisma.customer.findMany({
-      where: customerFilter,
-      select: { email: true, name: true },
-    });
 
     this.logger.log(`Starting campaign ${campaign.name} for ${customers.length} customers.`);
 
@@ -112,13 +148,40 @@ export class CampaignsService {
     let successCount = 0;
     let failCount = 0;
 
+    const useEmail = campaign.channels?.includes('EMAIL') ?? true;
+    const useWhatsapp = campaign.channels?.includes('WHATSAPP');
+
     for (const customer of customers) {
       try {
-        await this.mailService.sendHtmlEmail(customer.email, campaign.subject, campaign.content, campaign.companyId);
-        successCount++;
+        let sentAny = false;
+
+        if (useEmail && customer.email) {
+          await this.mailService.sendHtmlEmail(customer.email, campaign.subject, campaign.content, campaign.companyId);
+          sentAny = true;
+        }
+
+        if (useWhatsapp && customer.phone) {
+          // Strip HTML tags for WhatsApp formatting
+          // Also optionally handle <br> or <p> by replacing with newlines first
+          const plainTextContent = campaign.content
+            .replace(/<br\s*[\/]?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<[^>]*>?/gm, '')
+            .trim();
+            
+          await this.whatsappService.sendMessage(campaign.companyId, customer.phone, plainTextContent);
+          sentAny = true;
+        }
+
+        if (sentAny) {
+          successCount++;
+        } else {
+          failCount++;
+          this.logger.warn(`Skipped customer ${customer.id}: missing contact info for selected channels`);
+        }
       } catch (error) {
         failCount++;
-        this.logger.error(`Failed to send campaign to ${customer.email}`, error);
+        this.logger.error(`Failed to send campaign to ${customer.email || customer.phone}`, error);
       }
       // Simple rate limiting
       await new Promise(r => setTimeout(r, 100)); // 10 emails/sec max

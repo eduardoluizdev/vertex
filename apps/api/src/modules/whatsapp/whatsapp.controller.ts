@@ -43,4 +43,16 @@ export class WhatsappController {
   deleteInstance(@Param('companyId') companyId: string) {
     return this.whatsappService.deleteInstance(companyId);
   }
+
+  @Get('contacts/:companyId')
+  @ApiResponse({ status: HttpStatus.OK, description: 'Get all WhatsApp connected contacts' })
+  getContacts(@Param('companyId') companyId: string) {
+    return this.whatsappService.getContacts(companyId);
+  }
+
+  @Get('validate-number/:companyId/:number')
+  @ApiResponse({ status: HttpStatus.OK, description: 'Check if number exists in WhatsApp' })
+  validateNumber(@Param('companyId') companyId: string, @Param('number') number: string) {
+    return this.whatsappService.validateNumber(companyId, number);
+  }
 }
