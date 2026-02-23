@@ -23,14 +23,18 @@ export default async function DashboardLayout({
   ]);
 
   const companies = companiesResponse.ok ? await companiesResponse.json() : [];
+  
+  // Header-based check to prevent infinite loop on /empresas/nova
+  const headersList = await import('next/headers').then(m => m.headers());
+  const currentPath = headersList.get('x-invoke-path') || headersList.get('referer') || '';
+  
+  if (companies.length === 0 && !currentPath.includes('/empresas/nova')) {
+    redirect('/empresas/nova');
+  }
+
   const validIds = new Set(companies.map((c: { id: string }) => c.id));
   const resolvedSelectedId =
     selectedCompanyId && validIds.has(selectedCompanyId) ? selectedCompanyId : null;
-
-  if (selectedCompanyId && !resolvedSelectedId) {
-    const cookieStore = await cookies();
-    cookieStore.delete(SELECTED_COMPANY_COOKIE);
-  }
 
   return (
     <div className="flex h-screen overflow-hidden">

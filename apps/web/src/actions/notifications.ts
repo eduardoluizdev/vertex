@@ -5,7 +5,7 @@ import { Notification } from '@/types/notification';
 
 export async function getExpiringNotifications(companyId: string): Promise<Notification[]> {
   try {
-    const response = await apiClient('/notifications/expiring', {
+    const response = await apiClient('/v1/notifications/expiring', {
       headers: {
         'x-company-id': companyId,
       },

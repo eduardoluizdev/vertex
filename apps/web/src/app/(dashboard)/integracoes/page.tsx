@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
 import { Plug2, Mail, MessageSquare } from 'lucide-react';
-import { getIntegrations } from './_actions/integrations-actions';
+import { getIntegrationsServer } from '@/lib/services/integrations';
 import { ResendCard } from './_components/resend-card';
 import { WhatsappCard } from './_components/whatsapp-card';
-import { getWhatsappConnectionState } from './_actions/whatsapp-actions';
+import { getWhatsappConnectionStateServer } from '@/lib/services/whatsapp';
 import { getSelectedCompanyId } from '@/lib/cookies';
 
 export const metadata = {
@@ -22,9 +22,9 @@ export default async function IntegracoesPage() {
   const selectedCompanyId = await getSelectedCompanyId();
 
   const [adminIntegrations, companyIntegrations, whatsappState] = await Promise.all([
-    isAdmin ? getIntegrations() : Promise.resolve(null),
-    selectedCompanyId ? getIntegrations(selectedCompanyId) : Promise.resolve(null),
-    selectedCompanyId ? getWhatsappConnectionState(selectedCompanyId) : Promise.resolve(null),
+    isAdmin ? getIntegrationsServer() : Promise.resolve(null),
+    selectedCompanyId ? getIntegrationsServer(selectedCompanyId) : Promise.resolve(null),
+    selectedCompanyId ? getWhatsappConnectionStateServer(selectedCompanyId) : Promise.resolve(null),
   ]);
 
   return (

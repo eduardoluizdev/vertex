@@ -33,9 +33,10 @@ type CompanyFormValues = z.infer<typeof companySchema>;
 interface CompanyFormProps {
   defaultValues?: CompanyFormValues;
   companyId?: string;
+  onSuccess?: (companyId: string) => void;
 }
 
-export function CompanyForm({ defaultValues, companyId }: CompanyFormProps) {
+export function CompanyForm({ defaultValues, companyId, onSuccess }: CompanyFormProps) {
   const router = useRouter();
   const isEditing = !!companyId;
 
@@ -67,11 +68,18 @@ export function CompanyForm({ defaultValues, companyId }: CompanyFormProps) {
         throw new Error(error.message || 'Erro ao salvar empresa');
       }
 
+      const responseData = await response.json();
+
       toast.success(
         isEditing ? 'Empresa atualizada com sucesso' : 'Empresa criada com sucesso',
       );
-      router.push('/empresas');
-      router.refresh();
+      
+      if (onSuccess) {
+        onSuccess(responseData.id);
+      } else {
+        router.push('/empresas');
+        router.refresh();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Erro ao salvar empresa',
