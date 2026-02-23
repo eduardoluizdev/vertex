@@ -9,16 +9,18 @@ import { SELECTED_COMPANY_COOKIE } from '@/lib/cookies';
  * Define a empresa selecionada: valida acesso, seta o cookie e redireciona para a área da empresa.
  * Se companyId for null, apenas limpa o cookie e redireciona para /empresas.
  */
-export async function setSelectedCompany(companyId: string | null) {
+export async function setSelectedCompany(companyId: string | null, preventRedirect: boolean = false) {
   if (!companyId) {
     const cookieStore = await cookies();
     cookieStore.delete(SELECTED_COMPANY_COOKIE);
-    redirect('/empresas');
+    if (!preventRedirect) redirect('/empresas');
+    return;
   }
 
   const response = await apiClient('/v1/companies');
   if (!response.ok) {
-    redirect('/empresas');
+    if (!preventRedirect) redirect('/empresas');
+    return;
   }
 
   const companies = await response.json();
@@ -26,7 +28,8 @@ export async function setSelectedCompany(companyId: string | null) {
   if (!hasAccess) {
     const cookieStore = await cookies();
     cookieStore.delete(SELECTED_COMPANY_COOKIE);
-    redirect('/empresas');
+    if (!preventRedirect) redirect('/empresas');
+    return;
   }
 
   const cookieStore = await cookies();
@@ -35,7 +38,9 @@ export async function setSelectedCompany(companyId: string | null) {
     maxAge: 60 * 60 * 24 * 365, // 1 ano
   });
 
-  redirect(`/empresas/${companyId}`);
+  if (!preventRedirect) {
+    redirect(`/empresas/${companyId}`);
+  }
 }
 
 /**

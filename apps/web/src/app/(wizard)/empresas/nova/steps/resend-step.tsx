@@ -104,9 +104,9 @@ export function ResendStep({ companyId, onSuccess, onSkip }: ResendStepProps) {
         </p>
       </div>
 
-      <div className="p-6 border rounded-lg bg-card text-card-foreground shadow-sm">
+      <div className="w-full xl:max-w-md mx-auto">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="apiKey"
@@ -155,11 +155,11 @@ export function ResendStep({ companyId, onSuccess, onSkip }: ResendStepProps) {
               />
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t">
-              <Button type="button" variant="ghost" onClick={onSkip}>
-                Pular esta etapa
+            <div className="flex items-center justify-center gap-3 pt-6 mt-4">
+              <Button type="button" variant="ghost" onClick={onSkip} className="rounded-full px-6">
+                Pular
               </Button>
-              <Button type="submit" disabled={form.formState.isSubmitting}>
+              <Button type="submit" disabled={form.formState.isSubmitting} size="lg" className="rounded-full px-8">
                 {form.formState.isSubmitting ? 'Salvando...' : 'Salvar e Concluir'}
               </Button>
             </div>

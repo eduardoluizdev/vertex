@@ -76,10 +76,11 @@ export function CompanyForm({ defaultValues, companyId, onSuccess }: CompanyForm
       
       if (onSuccess) {
         onSuccess(responseData.id);
-      } else {
-        router.push('/empresas');
-        router.refresh();
+        return;
       }
+      
+      router.push('/empresas');
+      router.refresh();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Erro ao salvar empresa',
@@ -166,20 +167,13 @@ export function CompanyForm({ defaultValues, companyId, onSuccess }: CompanyForm
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button type="submit" disabled={form.formState.isSubmitting}>
+        <div className="flex justify-center pt-8 mt-4 border-t border-slate-100 dark:border-slate-800">
+          <Button type="submit" disabled={form.formState.isSubmitting} size="lg" className="rounded-full px-12">
             {form.formState.isSubmitting
               ? 'Salvando...'
               : isEditing
                 ? 'Salvar alterações'
-                : 'Criar empresa'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => router.back()}
-          >
-            Cancelar
+                : 'Avançar'}
           </Button>
         </div>
       </form>
