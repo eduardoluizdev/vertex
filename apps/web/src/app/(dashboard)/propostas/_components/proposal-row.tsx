@@ -62,8 +62,12 @@ export function ProposalRow({ proposal }: ProposalRowProps) {
   const handleWhatsapp = () => {
     startTransition(async () => {
       try {
-        await sendProposalWhatsapp(proposal.id);
-        toast.success('Mensagem enviada via WhatsApp!');
+        const res = await sendProposalWhatsapp(proposal.id);
+        if (res && res.error) {
+          toast.error(res.error);
+        } else {
+          toast.success('Mensagem enviada via WhatsApp!');
+        }
       } catch (e: any) {
         toast.error(e?.message ?? 'Erro ao enviar WhatsApp');
       }

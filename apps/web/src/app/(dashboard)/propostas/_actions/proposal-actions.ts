@@ -114,18 +114,27 @@ export async function deleteProposal(id: string) {
 
 export async function sendProposalWhatsapp(id: string) {
   const companyId = await getSelectedCompanyId();
-  if (!companyId) throw new Error('Empresa não selecionada');
+  if (!companyId) return { error: 'Empresa não selecionada' };
 
-  const res = await apiClient(
-    `/v1/companies/${companyId}/proposals/${id}/send-whatsapp`,
-    { method: 'POST' },
-  );
+  try {
+    const res = await apiClient(
+      `/v1/companies/${companyId}/proposals/${id}/send-whatsapp`,
+      { method: 'POST' },
+    );
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Erro ao enviar WhatsApp: ${err}`);
+    if (!res.ok) {
+      const errText = await res.text();
+      let errorMsg = errText;
+      try {
+        const json = JSON.parse(errText);
+        errorMsg = json.message || errText;
+      } catch (e) {}
+      return { error: `Erro da API: ${errorMsg}` };
+    }
+    return { success: true, data: await res.json() };
+  } catch (err: any) {
+    return { error: 'Falha de conexão com a API: ' + err.message };
   }
-  return res.json();
 }
 
 export async function getCustomers() {

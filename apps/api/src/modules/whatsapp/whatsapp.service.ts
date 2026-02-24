@@ -1,12 +1,25 @@
 import { Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class WhatsappService {
-  private readonly evolutionApiUrl = process.env.EVOLUTION_API_URL!;
-  private readonly apiKey = process.env.EVOLUTION_API_KEY!;
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {}
 
-  constructor(private readonly prisma: PrismaService) {}
+  private get evolutionApiUrl(): string {
+    const url = this.configService.get<string>('EVOLUTION_API_URL');
+    if (!url) throw new InternalServerErrorException('Configuração EVOLUTION_API_URL ausente no painel (Easypanel)');
+    return url;
+  }
+
+  private get apiKey(): string {
+    const key = this.configService.get<string>('EVOLUTION_API_KEY');
+    if (!key) throw new InternalServerErrorException('Configuração EVOLUTION_API_KEY ausente no painel (Easypanel)');
+    return key;
+  }
 
   async createInstance(companyId: string) {
     const company = await this.prisma.company.findUnique({
