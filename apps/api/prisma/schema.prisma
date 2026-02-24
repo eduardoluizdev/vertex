@@ -48,6 +48,13 @@ enum CampaignChannel {
   WHATSAPP
 }
 
+enum ProposalStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+}
+
 model User {
   id        String   @id @default(uuid())
   name      String
@@ -92,6 +99,8 @@ model Company {
   whatsappInstance WhatsappInstance?
   integrationConfigs IntegrationConfig[]
   campaigns Campaign[]
+  proposals Proposal[]
+  proposalWhatsappTemplate ProposalWhatsappTemplate?
 }
 
 model Customer {
@@ -120,6 +129,7 @@ model Customer {
 
   services Subscription[]
   campaigns Campaign[]
+  proposals Proposal[]
 }
 
 model Service {
@@ -220,4 +230,51 @@ model WhatsappInstance {
   updatedAt       DateTime @updatedAt
 
   @@map("whatsapp_instances")
+}
+
+model Proposal {
+  id           String         @id @default(uuid())
+  number       Int
+  title        String
+  status       ProposalStatus @default(DRAFT)
+  proposalDate DateTime       @default(now())
+  followUpDate DateTime?
+  notes        String?        @db.Text
+  publicToken  String         @unique @default(uuid())
+  totalValue   Float          @default(0)
+
+  customerId   String
+  customer     Customer       @relation(fields: [customerId], references: [id])
+
+  companyId    String
+  company      Company        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  items        ProposalItem[]
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([companyId, number])
+}
+
+model ProposalItem {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  quantity    Float
+  unitPrice   Float
+  totalPrice  Float
+
+  proposalId  String
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+}
+
+model ProposalWhatsappTemplate {
+  id        String   @id @default(uuid())
+  template  String   @db.Text
+  companyId String   @unique
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  updatedAt DateTime @updatedAt
+
+  @@map("proposal_whatsapp_templates")
 }

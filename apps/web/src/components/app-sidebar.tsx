@@ -17,6 +17,7 @@ import {
   ChevronDown,
   Plug2,
   Mail,
+  FileText,
 } from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
@@ -164,17 +165,25 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                     collapsed={collapsed}
                   />
                 )}
+                {filterBySearch('Campanhas') && (
+                  <NavItem
+                    href="/campanhas"
+                    icon={Mail}
+                    label="Campanhas"
+                    isActive={pathname?.includes('/campanhas')}
+                    collapsed={collapsed}
+                  />
+                )}
+                {filterBySearch('Propostas') && (
+                  <NavItem
+                    href="/propostas"
+                    icon={FileText}
+                    label="Propostas"
+                    isActive={pathname?.includes('/propostas')}
+                    collapsed={collapsed}
+                  />
+                )}
               </>
-            )}
-            
-            {filterBySearch('Campanhas') && (
-              <NavItem
-                href="/campanhas"
-                icon={Mail}
-                label="Campanhas"
-                isActive={pathname?.includes('/campanhas')}
-                collapsed={collapsed}
-              />
             )}
           </NavSection>
 

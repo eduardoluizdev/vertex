@@ -15,6 +15,7 @@ import { IntegrationsModule } from "./modules/integrations/integrations.module";
 import { NotificationsModule } from "./modules/notifications/notifications.module";
 import { CampaignsModule } from "./modules/campaigns/campaigns.module";
 import { WhatsappModule } from "./modules/whatsapp/whatsapp.module";
+import { ProposalsModule } from "./modules/proposals/proposals.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { WhatsappModule } from "./modules/whatsapp/whatsapp.module";
     NotificationsModule,
     CampaignsModule,
     WhatsappModule,
+    ProposalsModule,
   ],
   controllers: [AppController],
   providers: [AppService, PrismaService],

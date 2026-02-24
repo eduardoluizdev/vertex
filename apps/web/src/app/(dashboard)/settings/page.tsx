@@ -1,9 +1,17 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Mail, Clock, Settings as SettingsIcon, Bell } from 'lucide-react';
+import { Mail, Clock, Settings as SettingsIcon, Bell, MessageCircle, Link } from 'lucide-react';
+import { getWhatsappTemplate, getProposalIntegration } from '@/app/(dashboard)/propostas/_actions/proposal-actions';
+import { WhatsappTemplateForm } from '@/app/(dashboard)/propostas/_components/whatsapp-template-form';
+import { ProposalIntegrationForm } from '@/app/(dashboard)/propostas/_components/proposal-integration-form';
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
+  const [tplRecord, integration] = await Promise.all([
+    getWhatsappTemplate().catch(() => null),
+    getProposalIntegration().catch(() => ({ webUrl: '' })),
+  ]);
+  const currentTemplate = tplRecord?.template;
   return (
     <div className="min-h-screen p-6 md:p-8 space-y-10 max-w-7xl mx-auto">
       {/* Page Header */}
@@ -84,6 +92,57 @@ export default function SettingsPage() {
                   Para alterar estas configurações, contate o administrador do sistema.
                 </p>
               </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* WhatsApp Template for Proposals */}
+      <section className="space-y-6">
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="flex size-8 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/30">
+              <MessageCircle className="size-4 text-green-600 dark:text-green-400" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              WhatsApp – Propostas
+            </h2>
+          </div>
+          <p className="text-sm text-muted-foreground ml-10">
+            Defina o texto enviado ao cliente ao disparar uma proposta via WhatsApp.
+          </p>
+        </div>
+
+        <div className="pl-0 md:pl-10 grid gap-6 md:max-w-3xl">
+          {/* URL Card */}
+          <Card className="rounded-2xl border border-border bg-card shadow-sm">
+            <CardHeader className="border-b border-border bg-muted/10 pb-4">
+              <div className="flex items-center gap-2">
+                <Link className="h-5 w-5 text-muted-foreground" />
+                <CardTitle className="text-lg">URL Pública da Aplicação</CardTitle>
+              </div>
+              <CardDescription>
+                Base URL usada para gerar o link público enviado ao cliente junto com a proposta.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <ProposalIntegrationForm initialWebUrl={integration.webUrl} />
+            </CardContent>
+          </Card>
+
+          {/* Template Card */}
+          <Card className="rounded-2xl border border-border bg-card shadow-sm">
+            <CardHeader className="border-b border-border bg-muted/10 pb-4">
+              <div className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-green-600" />
+                <CardTitle className="text-lg">Template da Mensagem WhatsApp</CardTitle>
+              </div>
+              <CardDescription>
+                Use variáveis dinâmicas para personalizar a mensagem. Clique nelas para inserir.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <WhatsappTemplateForm initialTemplate={currentTemplate} />
             </CardContent>
           </Card>
         </div>

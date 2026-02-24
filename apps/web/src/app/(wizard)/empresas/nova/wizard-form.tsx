@@ -5,9 +5,10 @@ import { useRouter } from 'next/navigation';
 import { CompanyForm } from '@/app/(dashboard)/empresas/_components/company-form';
 import { WhatsappStep } from './steps/whatsapp-step';
 import { ResendStep } from './steps/resend-step';
+import { ProposalTemplateStep } from './steps/proposal-template-step';
 import { setSelectedCompany } from '@/app/(dashboard)/_actions/set-selected-company';
 
-type WizardStep = 'COMPANY' | 'WHATSAPP' | 'RESEND';
+type WizardStep = 'COMPANY' | 'WHATSAPP' | 'RESEND' | 'PROPOSAL_TEMPLATE';
 
 const STEP_INFO = {
   COMPANY: {
@@ -21,6 +22,10 @@ const STEP_INFO = {
   RESEND: {
     title: 'Configurar Email',
     subtitle: 'Permite enviarmos campanhas de e-mail pela sua caixa de saída.',
+  },
+  PROPOSAL_TEMPLATE: {
+    title: 'Mensagem de Proposta',
+    subtitle: 'Configure o texto enviado ao cliente quando você disparar uma proposta pelo WhatsApp.',
   },
 };
 
@@ -40,11 +45,15 @@ export function WizardForm() {
   };
 
   const handleResendFinished = () => {
+    setCurrentStep('PROPOSAL_TEMPLATE');
+  };
+
+  const handleProposalTemplateFinished = () => {
     router.push('/dashboard');
     router.refresh();
   };
 
-  const steps: WizardStep[] = ['COMPANY', 'WHATSAPP', 'RESEND'];
+  const steps: WizardStep[] = ['COMPANY', 'WHATSAPP', 'RESEND', 'PROPOSAL_TEMPLATE'];
   const currentIndex = steps.indexOf(currentStep);
   const info = STEP_INFO[currentStep];
 
@@ -60,6 +69,7 @@ export function WizardForm() {
                 onClick={() => {
                   if (currentStep === 'WHATSAPP') setCurrentStep('COMPANY');
                   if (currentStep === 'RESEND') setCurrentStep('WHATSAPP');
+                  if (currentStep === 'PROPOSAL_TEMPLATE') setCurrentStep('RESEND');
                 }} 
                 className="hover:text-foreground transition-colors"
               >
@@ -116,6 +126,15 @@ export function WizardForm() {
                   companyId={createdCompanyId} 
                   onSuccess={handleResendFinished} 
                   onSkip={handleResendFinished} 
+                />
+              </div>
+            )}
+
+            {currentStep === 'PROPOSAL_TEMPLATE' && (
+              <div className="animate-in fade-in zoom-in-95 duration-500">
+                <ProposalTemplateStep
+                  onSuccess={handleProposalTemplateFinished}
+                  onSkip={handleProposalTemplateFinished}
                 />
               </div>
             )}
