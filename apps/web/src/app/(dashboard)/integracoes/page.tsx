@@ -6,6 +6,7 @@ import { ResendCard } from './_components/resend-card';
 import { WhatsappCard } from './_components/whatsapp-card';
 import { getWhatsappConnectionStateServer } from '@/lib/services/whatsapp';
 import { getSelectedCompanyId } from '@/lib/cookies';
+import { getDomainStatus } from './_actions/domain-actions';
 
 export const metadata = {
   title: 'Integrações — VertexHub',
@@ -21,10 +22,11 @@ export default async function IntegracoesPage() {
   const isAdmin = session.user.role === 'ADMIN';
   const selectedCompanyId = await getSelectedCompanyId();
 
-  const [adminIntegrations, companyIntegrations, whatsappState] = await Promise.all([
+  const [adminIntegrations, companyIntegrations, whatsappState, domainStatus] = await Promise.all([
     isAdmin ? getIntegrationsServer() : Promise.resolve(null),
     selectedCompanyId ? getIntegrationsServer(selectedCompanyId) : Promise.resolve(null),
     selectedCompanyId ? getWhatsappConnectionStateServer(selectedCompanyId) : Promise.resolve(null),
+    selectedCompanyId ? getDomainStatus(selectedCompanyId) : Promise.resolve(null),
   ]);
 
   return (
@@ -107,6 +109,9 @@ export default async function IntegracoesPage() {
                 initialFromEmail={companyIntegrations.resend.fromEmail ?? ''}
                 isConfigured={companyIntegrations.resend.isConfigured ?? false}
                 companyId={selectedCompanyId}
+                initialDomain={domainStatus?.domain ?? null}
+                initialStatus={domainStatus?.status ?? 'not_started'}
+                initialRecords={domainStatus?.records ?? []}
               />
             )}
           </div>

@@ -1,14 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
+import { EasypanelService } from '../easypanel/easypanel.service';
 
 const PROPOSAL_PROVIDER = 'proposal';
 
 @Injectable()
 export class ProposalsService {
+  private readonly logger = new Logger(ProposalsService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly whatsappService: WhatsappService,
+    private readonly easypanelService: EasypanelService,
   ) {}
 
   private async nextNumber(companyId: string): Promise<number> {
@@ -249,6 +253,15 @@ export class ProposalsService {
       where: { provider: PROPOSAL_PROVIDER, companyId },
     });
     const data = { webUrl } as any;
+
+    try {
+      if (webUrl) {
+         const url = new URL(webUrl.startsWith('http') ? webUrl : `https://${webUrl}`);
+         await this.easypanelService.addDomainToService('vertex', 'web', url.hostname);
+      }
+    } catch (e: any) {
+      this.logger.error(`Error adding domain to Easypanel: ${e.message}`, e.stack);
+    }
     if (existing) {
       await this.prisma.integrationConfig.update({
         where: { id: existing.id },

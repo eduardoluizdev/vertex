@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Mail, Clock, Settings as SettingsIcon, Bell, MessageCircle, Link } from 'lucide-react';
+import { Mail, Clock, Settings as SettingsIcon, Bell, MessageCircle, Globe } from 'lucide-react';
 import { getWhatsappTemplate, getProposalIntegration } from '@/app/(dashboard)/propostas/_actions/proposal-actions';
 import { WhatsappTemplateForm } from '@/app/(dashboard)/propostas/_components/whatsapp-template-form';
 import { ProposalIntegrationForm } from '@/app/(dashboard)/propostas/_components/proposal-integration-form';
@@ -97,19 +97,18 @@ export default async function SettingsPage() {
         </div>
       </section>
 
-      {/* WhatsApp Template for Proposals */}
       <section className="space-y-6">
         <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2">
-            <div className="flex size-8 items-center justify-center rounded-lg bg-green-50 dark:bg-green-950/30">
-              <MessageCircle className="size-4 text-green-600 dark:text-green-400" />
+            <div className="flex size-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
+              <Globe className="size-4 text-blue-600 dark:text-blue-400" />
             </div>
             <h2 className="text-lg font-semibold text-foreground">
-              WhatsApp – Propostas
+              Domínio Personalizado — Propostas
             </h2>
           </div>
           <p className="text-sm text-muted-foreground ml-10">
-            Defina o texto enviado ao cliente ao disparar uma proposta via WhatsApp.
+            Configure o endereço próprio da empresa para os links de proposta enviados aos clientes.
           </p>
         </div>
 
@@ -118,11 +117,11 @@ export default async function SettingsPage() {
           <Card className="rounded-2xl border border-border bg-card shadow-sm">
             <CardHeader className="border-b border-border bg-muted/10 pb-4">
               <div className="flex items-center gap-2">
-                <Link className="h-5 w-5 text-muted-foreground" />
-                <CardTitle className="text-lg">URL Pública da Aplicação</CardTitle>
+                <Globe className="h-5 w-5 text-blue-500" />
+                <CardTitle className="text-lg">Domínio Personalizado</CardTitle>
               </div>
               <CardDescription>
-                Base URL usada para gerar o link público enviado ao cliente junto com a proposta.
+                Configure um subdomínio da sua empresa (ex: <code className="font-mono text-xs">propostas.suaempresa.com.br</code>) para que os links das propostas não usem o domínio padrão da aplicação.
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -130,7 +129,7 @@ export default async function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Template Card */}
+          {/* WhatsApp Template Card  */}
           <Card className="rounded-2xl border border-border bg-card shadow-sm">
             <CardHeader className="border-b border-border bg-muted/10 pb-4">
               <div className="flex items-center gap-2">

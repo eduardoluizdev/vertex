@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Body,
   Param,
   Query,
@@ -61,5 +62,37 @@ export class IntegrationsController {
       return this.integrationsService.testResendConnection(companyId);
     }
     return { success: false, message: `Teste não implementado para "${provider}".` };
+  }
+
+  // ─── Domain Management ───────────────────────────────────────────────────────
+
+  @Post('domain')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Register a custom email domain in Resend for the company' })
+  createDomain(
+    @Body() body: { domain: string },
+    @Query('companyId') companyId: string,
+  ) {
+    return this.integrationsService.createDomain(companyId, body.domain);
+  }
+
+  @Get('domain')
+  @ApiOperation({ summary: 'Get domain status and DNS records for the company' })
+  getDomainStatus(@Query('companyId') companyId: string) {
+    return this.integrationsService.getDomainStatus(companyId);
+  }
+
+  @Post('domain/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Trigger domain verification in Resend' })
+  verifyDomain(@Query('companyId') companyId: string) {
+    return this.integrationsService.verifyDomain(companyId);
+  }
+
+  @Delete('domain')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Remove the custom domain from Resend for the company' })
+  deleteDomain(@Query('companyId') companyId: string) {
+    return this.integrationsService.deleteDomain(companyId);
   }
 }

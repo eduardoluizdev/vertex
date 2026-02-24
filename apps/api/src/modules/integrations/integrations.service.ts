@@ -1,15 +1,24 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { Resend } from 'resend';
 import { PrismaService } from '../../prisma.service';
 import { UpdateIntegrationsDto } from './dto/update-integrations.dto';
 
 export const RESEND_PROVIDER = 'resend';
 
+/** Instancia o cliente Resend sempre com a região São Paulo (sa-east-1) */
+function createResendClient(apiKey: string): Resend {
+  return new Resend(apiKey);
+}
+
+
 /** Shape of the config JSON stored for the Resend provider */
 interface ResendConfig {
   apiKey?: string;
   frontendUrl?: string;
   fromEmail?: string;
+  domainId?: string;
+  domain?: string;
+  domainStatus?: 'pending' | 'verified' | 'failed' | 'not_started';
 }
 
 @Injectable()
@@ -117,6 +126,171 @@ export class IntegrationsService {
   }
 
   /**
+   * Retrieves the Resend API key for a given company (no fallback to env).
+   */
+  private async getCompanyResendKey(companyId: string): Promise<string> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: RESEND_PROVIDER, companyId },
+    });
+    const cfg = (row?.config ?? {}) as ResendConfig;
+    const apiKey = cfg.apiKey ?? '';
+    if (!apiKey || !apiKey.startsWith('re_')) {
+      throw new BadRequestException(
+        'API Key do Resend não configurada para esta empresa. Configure em Integrações → Resend primeiro.',
+      );
+    }
+    return apiKey;
+  }
+
+  /**
+   * Registers a new domain in Resend for the given company.
+   * Stores domainId, domain and domainStatus in the IntegrationConfig JSON.
+   */
+  async createDomain(companyId: string, domain: string) {
+    const apiKey = await this.getCompanyResendKey(companyId);
+    const resend = createResendClient(apiKey);
+
+    const { data, error } = await resend.domains.create({ name: domain });
+    if (error || !data) {
+      throw new BadRequestException(
+        `Erro ao cadastrar domínio no Resend: ${error?.message ?? 'resposta inválida'}`,
+      );
+    }
+
+    // Persist in IntegrationConfig
+    const existing = await this.prisma.integrationConfig.findFirst({
+      where: { provider: RESEND_PROVIDER, companyId },
+    });
+    const existingConfig = (existing?.config ?? {}) as Record<string, unknown>;
+    const updatedConfig = {
+      ...existingConfig,
+      domainId: data.id,
+      domain: data.name,
+      domainStatus: 'pending',
+    };
+
+    if (existing) {
+      await this.prisma.integrationConfig.update({
+        where: { id: existing.id },
+        data: { config: updatedConfig as any },
+      });
+    } else {
+      await this.prisma.integrationConfig.create({
+        data: {
+          provider: RESEND_PROVIDER,
+          companyId,
+          name: 'Resend',
+          config: updatedConfig as any,
+          enabled: true,
+        },
+      });
+    }
+
+    // Return records for DNS configuration
+    return {
+      domainId: data.id,
+      domain: data.name,
+      status: 'pending',
+      records: data.records ?? [],
+    };
+  }
+
+  /**
+   * Fetches the current domain status and DNS records from Resend.
+   */
+  async getDomainStatus(companyId: string) {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: RESEND_PROVIDER, companyId },
+    });
+    const cfg = (row?.config ?? {}) as ResendConfig;
+
+    if (!cfg.domainId) {
+      return { domain: null, status: 'not_started', records: [] };
+    }
+
+    const apiKey = await this.getCompanyResendKey(companyId);
+    const resend = createResendClient(apiKey);
+
+    const { data, error } = await resend.domains.get(cfg.domainId);
+    if (error || !data) {
+      throw new BadRequestException(
+        `Erro ao consultar domínio no Resend: ${error?.message ?? 'resposta inválida'}`,
+      );
+    }
+
+    // Sync status back to DB
+    const existingConfig = (row?.config ?? {}) as Record<string, unknown>;
+    await this.prisma.integrationConfig.update({
+      where: { id: row!.id },
+      data: {
+        config: { ...existingConfig, domainStatus: data.status } as any,
+      },
+    });
+
+    return {
+      domainId: data.id,
+      domain: data.name,
+      status: data.status,
+      records: data.records ?? [],
+    };
+  }
+
+  /**
+   * Triggers domain verification in Resend.
+   */
+  async verifyDomain(companyId: string) {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: RESEND_PROVIDER, companyId },
+    });
+    const cfg = (row?.config ?? {}) as ResendConfig;
+
+    if (!cfg.domainId) {
+      throw new NotFoundException('Nenhum domínio cadastrado para esta empresa.');
+    }
+
+    const apiKey = await this.getCompanyResendKey(companyId);
+    const resend = createResendClient(apiKey);
+
+    const { data, error } = await resend.domains.verify(cfg.domainId);
+    if (error) {
+      throw new BadRequestException(
+        `Erro ao verificar domínio no Resend: ${error.message}`,
+      );
+    }
+
+    return { ok: true, data };
+  }
+
+  /**
+   * Deletes the domain from Resend and clears related fields from config.
+   */
+  async deleteDomain(companyId: string) {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: RESEND_PROVIDER, companyId },
+    });
+    const cfg = (row?.config ?? {}) as ResendConfig;
+
+    if (!cfg.domainId) {
+      throw new NotFoundException('Nenhum domínio cadastrado para esta empresa.');
+    }
+
+    const apiKey = await this.getCompanyResendKey(companyId);
+    const resend = createResendClient(apiKey);
+
+    await resend.domains.remove(cfg.domainId);
+
+    // Clear domain fields from config
+    const existingConfig = (row?.config ?? {}) as Record<string, unknown>;
+    const { domainId: _did, domain: _d, domainStatus: _ds, ...rest } = existingConfig as any;
+    await this.prisma.integrationConfig.update({
+      where: { id: row!.id },
+      data: { config: rest as any },
+    });
+
+    return { ok: true };
+  }
+
+  /**
    * Tests the Resend connection using the key from DB (or env fallback).
    */
   async testResendConnection(companyId?: string): Promise<{ success: boolean; message: string }> {
@@ -138,7 +312,7 @@ export class IntegrationsService {
     }
 
     try {
-      const resend = new Resend(apiKey);
+      const resend = createResendClient(apiKey);
       const { error } = await resend.domains.list();
 
       if (error) {
