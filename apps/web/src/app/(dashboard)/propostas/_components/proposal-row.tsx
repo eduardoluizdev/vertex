@@ -125,9 +125,9 @@ export function ProposalRow({ proposal }: ProposalRowProps) {
             variant="ghost"
             size="sm"
             onClick={handleWhatsapp}
-            disabled={isPending}
-            title="Enviar via WhatsApp"
-            className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
+            disabled={isPending || proposal.status === 'APPROVED' || proposal.status === 'REJECTED'}
+            title={proposal.status === 'APPROVED' || proposal.status === 'REJECTED' ? 'Ação indisponível para esta proposta' : 'Enviar via WhatsApp'}
+            className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30 disabled:opacity-50"
           >
             <MessageCircle className="h-4 w-4" />
           </Button>

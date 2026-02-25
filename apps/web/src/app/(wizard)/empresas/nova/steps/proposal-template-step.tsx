@@ -12,6 +12,7 @@ const VARIABLES = [
   { key: '#CLIENTE#', description: 'Nome do cliente' },
   { key: '#VALOR#', description: 'Valor total da proposta' },
   { key: '#LINK#', description: 'Link público da proposta' },
+  { key: '#EMPRESA#', description: 'Nome da empresa' },
 ];
 
 const DEFAULT_TEMPLATE =

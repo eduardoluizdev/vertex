@@ -106,7 +106,7 @@ export class ProposalsService {
   async findOne(companyId: string, id: string) {
     const proposal = await this.prisma.proposal.findFirst({
       where: { id, companyId },
-      include: { items: true, customer: true },
+      include: { items: true, customer: true, company: true },
     });
     if (!proposal) throw new NotFoundException('Proposal not found');
     return proposal;
@@ -122,7 +122,10 @@ export class ProposalsService {
   }
 
   async update(companyId: string, id: string, dto: any) {
-    await this.findOne(companyId, id);
+    const proposal = await this.findOne(companyId, id);
+    if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
+      throw new BadRequestException('Não é possível alterar uma proposta já aprovada ou reprovada.');
+    }
 
     const items = dto.items ?? [];
     const totalValue = items.length > 0 ? this.calcTotal(items) : undefined;
@@ -157,7 +160,10 @@ export class ProposalsService {
   }
 
   async updateStatus(companyId: string, id: string, status: string) {
-    await this.findOne(companyId, id);
+    const proposal = await this.findOne(companyId, id);
+    if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
+      throw new BadRequestException('Não é possível alterar o status de uma proposta já aprovada ou reprovada.');
+    }
     return this.prisma.proposal.update({
       where: { id },
       data: { status: status as any },
@@ -166,6 +172,9 @@ export class ProposalsService {
 
   async updateStatusByToken(token: string, status: string) {
     const proposal = await this.findByToken(token);
+    if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
+      throw new BadRequestException('Esta proposta já foi aprovada ou reprovada.');
+    }
     return this.prisma.proposal.update({
       where: { id: proposal.id },
       data: { status: status as any },
@@ -179,6 +188,11 @@ export class ProposalsService {
 
   async sendWhatsapp(companyId: string, id: string) {
     const proposal = await this.findOne(companyId, id);
+    
+    if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
+      throw new BadRequestException('Não é possível reenviar mensagem para uma proposta já aprovada ou reprovada.');
+    }
+
     if (!proposal.customer.phone) {
       throw new Error('Cliente sem número de telefone');
     }
@@ -207,7 +221,8 @@ export class ProposalsService {
       .replace(/#PROPOSTA#/g, String(proposal.number))
       .replace(/#CLIENTE#/g, proposal.customer.name)
       .replace(/#VALOR#/g, proposal.totalValue.toFixed(2))
-      .replace(/#LINK#/g, publicLink);
+      .replace(/#LINK#/g, publicLink)
+      .replace(/#EMPRESA#/g, proposal.company?.name || '');
 
     const rawPhone = proposal.customer.phone.replace(/\D/g, '');
     const phone =

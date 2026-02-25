@@ -195,7 +195,11 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
 
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={status} onValueChange={setStatus}>
+            <Select 
+              value={status} 
+              onValueChange={setStatus}
+              disabled={proposal?.status === 'APPROVED' || proposal?.status === 'REJECTED'}
+            >
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 {STATUS_OPTIONS.map((s) => (
