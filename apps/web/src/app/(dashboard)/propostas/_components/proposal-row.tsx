@@ -37,9 +37,10 @@ const STATUS_VARIANTS: Record<string, 'default' | 'secondary' | 'outline' | 'des
 
 interface ProposalRowProps {
   proposal: any;
+  integrationUrl?: string;
 }
 
-export function ProposalRow({ proposal }: ProposalRowProps) {
+export function ProposalRow({ proposal, integrationUrl }: ProposalRowProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -74,7 +75,10 @@ export function ProposalRow({ proposal }: ProposalRowProps) {
     });
   };
 
-  const publicUrl = `/p/${proposal.publicToken}`;
+  const baseUrl = integrationUrl
+    ? (integrationUrl.startsWith('http') ? integrationUrl : `https://${integrationUrl}`)
+    : '';
+  const publicUrl = baseUrl ? `${baseUrl}/p/${proposal.publicToken}` : `/p/${proposal.publicToken}`;
 
   return (
     <>

@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
 import { Breadcrumb } from '@/components/breadcrumb';
-import { getProposals, getCustomers } from './_actions/proposal-actions';
+import { getProposals, getCustomers, getProposalIntegration } from './_actions/proposal-actions';
 import { ProposalFilters } from './_components/proposal-filters';
 import { ProposalRow } from './_components/proposal-row';
 
@@ -12,9 +12,10 @@ interface PropostasPageProps {
 
 export default async function PropostasPage({ searchParams }: PropostasPageProps) {
   const filters = await searchParams;
-  const [proposals, customers] = await Promise.all([
+  const [proposals, customers, integration] = await Promise.all([
     getProposals(filters),
     getCustomers(),
+    getProposalIntegration(),
   ]);
 
   return (
@@ -63,7 +64,7 @@ export default async function PropostasPage({ searchParams }: PropostasPageProps
           ) : (
             <div className="space-y-3">
               {proposals.map((proposal: any) => (
-                <ProposalRow key={proposal.id} proposal={proposal} />
+                <ProposalRow key={proposal.id} proposal={proposal} integrationUrl={integration.webUrl} />
               ))}
             </div>
           )}
