@@ -7,15 +7,19 @@ import { Loader2, QrCode as QrCodeIcon, MessageCircle, AlertCircle, RefreshCw, T
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { fetchClient } from '@/lib/fetch-client';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
+import { WhatsappTemplateForm } from '@/app/(dashboard)/propostas/_components/whatsapp-template-form';
 
 interface WhatsappCardProps {
   companyId: string;
   initialStatus: string;
   qrcode: string | null;
   instanceName: string | null;
+  initialTemplate?: string;
+  initialFollowUpTemplate?: string;
 }
 
-export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, instanceName: initialInstanceName }: WhatsappCardProps) {
+export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, instanceName: initialInstanceName, initialTemplate, initialFollowUpTemplate }: WhatsappCardProps) {
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [status, setStatus] = useState(initialStatus);
@@ -143,38 +147,21 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
   };
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md">
-      {/* Card Header */}
-      <div className="relative overflow-hidden px-6 py-5 border-b border-border bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {/* WhatsApp Logo/Icon */}
-            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 shrink-0">
-              <MessageCircle className="size-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-foreground">WhatsApp API</h3>
-                <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                  Evolution API
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Conecte WhatsApp para notificações e campanhas
-              </p>
-              {instanceName && (
-                <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 flex items-center gap-1">
-                  <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Instância: {instanceName}
-                </p>
-              )}
-            </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <div className="rounded-xl border border-border bg-card p-5 cursor-pointer hover:border-emerald-500/50 transition-colors group h-full">
+          <div className="flex items-center gap-4 mb-3">
+             <div className="flex size-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 group-hover:scale-110 transition-transform">
+               <MessageCircle className="size-5" />
+             </div>
+             <div className="flex-1">
+               <h3 className="font-semibold text-foreground">WhatsApp API</h3>
+               <p className="text-xs text-muted-foreground">Notificações e Campanhas</p>
+             </div>
           </div>
-
-          <div className="flex items-center gap-3">
-            {/* Status Badge */}
+          <div>
             <div
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border shrink-0 ${
+              className={`flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium border ${
                 status === 'CONNECTED'
                   ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
                   : status === 'CONNECTING'
@@ -197,144 +184,193 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
                 ? 'Aguardando'
                 : 'Desconectado'}
             </div>
+          </div>
+        </div>
+      </SheetTrigger>
 
-            {/* Actions for connected */}
-            {status !== 'DISCONNECTED' && (
-              <div className="flex items-center gap-2">
-                <Button size="icon" variant="outline" onClick={refreshStatus} title="Atualizar Status" className="size-8 rounded-full">
-                  <RefreshCw className="size-4 text-muted-foreground" />
-                </Button>
+      <SheetContent className="sm:max-w-[600px] w-full p-0 flex flex-col h-full sm:h-auto sm:max-h-[100dvh]">
+        <SheetHeader className="px-6 py-6 border-b border-border/50 bg-muted/10 shrink-0">
+          <SheetTitle className="text-xl">WhatsApp API</SheetTitle>
+          <SheetDescription>Configure sua conexão e personalize mensagens automáticas.</SheetDescription>
+        </SheetHeader>
+
+        <div className="p-6 space-y-8 flex-1 overflow-y-auto">
+          {/* Section 1: Connection */}
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
+            <div className="relative overflow-hidden px-6 py-5 border-b border-border bg-gradient-to-r from-emerald-500/5 via-transparent to-teal-500/5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 shadow-lg shadow-emerald-500/20 shrink-0">
+                    <MessageCircle className="size-6 text-white" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-semibold text-foreground">Dispositivo</h3>
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                        Evolution API
+                      </span>
+                    </div>
+                    {instanceName && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium mt-0.5 flex items-center gap-1">
+                        <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        Instância: {instanceName}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {status !== 'DISCONNECTED' && (
+                    <div className="flex items-center gap-2">
+                      <Button size="icon" variant="outline" onClick={refreshStatus} title="Atualizar Status" className="size-8 rounded-full">
+                        <RefreshCw className="size-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {status === 'CONNECTED' && (
+              <div className="flex flex-col border-border/50">
+                <div className="p-6 bg-muted/10 flex items-center justify-between border-b border-border/50">
+                    <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                      <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10">
+                        <CheckCircle2 className="size-4 text-emerald-500" />
+                      </div>
+                      <div>
+                        <span className="font-medium text-foreground block">Tudo pronto!</span>
+                        Sua conexão está ativa e pronta para enviar mensagens.
+                      </div>
+                    </div>
+                    <Button variant="destructive" size="sm" onClick={handleDisconnect} disabled={loading} className="gap-2 shrink-0">
+                      {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                      Desconectar
+                    </Button>
+                </div>
+
+                <div className="p-6 bg-card">
+                  <h4 className="text-sm font-semibold mb-3">Teste Rápido de Envio</h4>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      placeholder="Número (Ex: 11999999999)"
+                      value={testNumber}
+                      onChange={(e) => setTestNumber(e.target.value)}
+                      className="max-w-[200px]"
+                    />
+                    <Input
+                      placeholder="Mensagem"
+                      value={testMessage}
+                      onChange={(e) => setTestMessage(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button onClick={handleTestMessage} disabled={testing || !testNumber}>
+                      {testing ? <Loader2 className="size-4 animate-spin" /> : 'Enviar Teste'}
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
-          </div>
-        </div>
-      </div>
 
-      {status === 'CONNECTED' && (
-        <div className="flex flex-col border-t border-border/50">
-          <div className="p-6 bg-muted/10 flex items-center justify-between">
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <div className="flex size-8 items-center justify-center rounded-full bg-emerald-500/10">
-                  <CheckCircle2 className="size-4 text-emerald-500" />
+            {status === 'CONNECTING' && (
+              <div className="bg-card p-6 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-md pointer-events-none">
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-emerald-500/5 blur-3xl" />
                 </div>
-                <div>
-                  <span className="font-medium text-foreground block">Tudo pronto!</span>
-                  Sua conexão está ativa e pronta para enviar mensagens.
+
+                <div className="relative z-10 w-full max-w-sm mx-auto">
+                  {qrcode ? (
+                    <div className="space-y-6 flex flex-col items-center">
+                      <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 duration-500">
+                        <img 
+                          src={`${qrcode}`} 
+                          alt="QR Code WhatsApp" 
+                          width={280} 
+                          height={280}
+                          className="rounded-lg mix-blend-multiply"
+                        />
+                      </div>
+                      
+                      <div className="text-center space-y-2">
+                        <h4 className="text-lg font-semibold text-foreground">Leia o QR Code</h4>
+                        <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border">
+                          1. Abra o WhatsApp no seu celular<br/>
+                          2. Toque em <strong>Aparelhos conectados</strong><br/>
+                          3. Aponte a câmera para a tela
+                        </p>
+                      </div>
+                      
+                      <div className="flex w-full gap-3 pt-2">
+                        <Button 
+                          variant="outline" 
+                          className="flex-1 gap-2"
+                          onClick={handleRefreshQR} 
+                          disabled={isRefreshing || loading}
+                        >
+                          {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                          Novo QR
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          className="flex-1 gap-2"
+                          onClick={handleDisconnect} 
+                          disabled={loading}
+                        >
+                          <Trash2 className="size-4" />
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                      <div className="flex flex-col items-center gap-4 py-8">
+                        <div className="relative flex items-center justify-center">
+                          <Loader2 className="size-10 animate-spin text-emerald-500" />
+                          <div className="absolute inset-0 size-10 rounded-full border-4 border-emerald-500/20" />
+                        </div>
+                        <div className="space-y-1">
+                          <h4 className="font-medium text-foreground">Gerando QR Code</h4>
+                          <p className="text-sm text-muted-foreground">Conectando com a Evolution API...</p>
+                        </div>
+                      </div>
+                  )}
                 </div>
               </div>
-              <Button variant="destructive" size="sm" onClick={handleDisconnect} disabled={loading} className="gap-2">
-                {loading ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-                Desconectar
-              </Button>
-          </div>
+            )}
 
-          <div className="p-6 bg-card border-t border-border/50">
-            <h4 className="text-sm font-semibold mb-3">Teste Rápido de Envio</h4>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Input
-                placeholder="Número (Ex: 11999999999)"
-                value={testNumber}
-                onChange={(e) => setTestNumber(e.target.value)}
-                className="max-w-[200px]"
-              />
-              <Input
-                placeholder="Mensagem"
-                value={testMessage}
-                onChange={(e) => setTestMessage(e.target.value)}
-                className="flex-1"
-              />
-              <Button onClick={handleTestMessage} disabled={testing || !testNumber}>
-                {testing ? <Loader2 className="size-4 animate-spin" /> : 'Enviar Teste'}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {status === 'CONNECTING' && (
-        <div className="bg-card p-8 flex flex-col items-center justify-center text-center relative overflow-hidden">
-          {/* Background decoration */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-md pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full bg-emerald-500/5 blur-3xl" />
-          </div>
-
-          <div className="relative z-10 w-full max-w-sm mx-auto">
-            {qrcode ? (
-              <div className="space-y-6 flex flex-col items-center">
-                <div className="bg-white p-4 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 transition-all hover:scale-105 duration-500">
-                  <img 
-                    src={`${qrcode}`} 
-                    alt="QR Code WhatsApp" 
-                    width={280} 
-                    height={280}
-                    className="rounded-lg mix-blend-multiply"
-                  />
-                </div>
-                
-                <div className="text-center space-y-2">
-                  <h4 className="text-lg font-semibold text-foreground">Leia o QR Code</h4>
-                  <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg border">
-                    1. Abra o WhatsApp no seu celular<br/>
-                    2. Toque em <strong>Mais opções</strong> ou <strong>Configurações</strong><br/>
-                    3. Toque em <strong>Aparelhos conectados</strong><br/>
-                    4. Aponte a câmera para a tela
+            {status === 'DISCONNECTED' && (
+              <div className="p-6 flex flex-col items-center text-center gap-4 bg-muted/10">
+                  <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
+                    <AlertCircle className="size-6 text-blue-500" />
+                  </div>
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Conecte seu dispositivo para habilitar o envio de mensagens automáticas pela sua empresa.
                   </p>
-                </div>
-                
-                <div className="flex w-full gap-3 pt-2">
-                  <Button 
-                    variant="outline" 
-                    className="flex-1 gap-2"
-                    onClick={handleRefreshQR} 
-                    disabled={isRefreshing || loading}
-                  >
-                    {isRefreshing ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-                    Novo QR
+                  
+                  <Button onClick={handleCreateInstance} disabled={loading} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 gap-2">
+                    {loading ? <Loader2 className="size-4 animate-spin" /> : <QrCodeIcon className="size-4" />}
+                    Conectar Dispositivo
                   </Button>
-                  <Button 
-                    variant="destructive" 
-                    className="flex-1 gap-2"
-                    onClick={handleDisconnect} 
-                    disabled={loading}
-                  >
-                    <Trash2 className="size-4" />
-                    Cancelar
-                  </Button>
-                </div>
               </div>
-            ) : (
-                <div className="flex flex-col items-center gap-4 py-12">
-                  <div className="relative flex items-center justify-center">
-                    <Loader2 className="size-12 animate-spin text-emerald-500" />
-                    <div className="absolute inset-0 size-12 rounded-full border-4 border-emerald-500/20" />
-                  </div>
-                  <div className="space-y-1">
-                    <h4 className="font-medium text-foreground">Gerando QR Code</h4>
-                    <p className="text-sm text-muted-foreground">Conectando com a Evolution API...</p>
-                  </div>
-                </div>
             )}
           </div>
-        </div>
-      )}
 
-      {status === 'DISCONNECTED' && (
-        <div className="p-6 border-t flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 bg-muted/10">
-            <div className="flex items-start gap-3 text-sm text-muted-foreground max-w-md">
-              <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-500/10">
-                <AlertCircle className="size-4 text-blue-500" />
-              </div>
-              <p className="leading-relaxed pt-1">
-                Conecte seu dispositivo para habilitar o envio de mensagens automáticas pela sua empresa.
-              </p>
+          {/* Section 2: Templates */}
+          {status !== 'DISCONNECTED' && (
+            <div className="rounded-2xl border border-border bg-card overflow-hidden">
+               <div className="p-5 bg-muted/10 border-b border-border/50">
+                  <h3 className="text-base font-semibold text-foreground">Templates de Disparo</h3>
+                  <p className="text-sm text-muted-foreground mt-1 tracking-tight">Configure o conteúdo das mensagens enviadas com suas Propostas.</p>
+               </div>
+               <div className="p-6">
+                 <WhatsappTemplateForm 
+                   initialTemplate={initialTemplate} 
+                   initialFollowUpTemplate={initialFollowUpTemplate} 
+                 />
+               </div>
             </div>
-            
-            <Button onClick={handleCreateInstance} disabled={loading} className="w-full sm:w-auto shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-500/20 gap-2">
-              {loading ? <Loader2 className="size-4 animate-spin" /> : <QrCodeIcon className="size-4" />}
-              Conectar Dispositivo
-            </Button>
+          )}
         </div>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
   );
 }

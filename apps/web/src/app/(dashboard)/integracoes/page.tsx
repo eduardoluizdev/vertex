@@ -7,6 +7,10 @@ import { WhatsappCard } from './_components/whatsapp-card';
 import { getWhatsappConnectionStateServer } from '@/lib/services/whatsapp';
 import { getSelectedCompanyId } from '@/lib/cookies';
 import { getDomainStatus } from './_actions/domain-actions';
+import { ProposalDomainCard } from './_components/proposal-domain-card';
+import { getWhatsappTemplate, getProposalIntegration } from '@/app/(dashboard)/propostas/_actions/proposal-actions';
+import { apiClient } from '@/lib/api';
+import { NotificationsCard } from './_components/notifications-card';
 
 export const metadata = {
   title: 'Integrações — VertexHub',
@@ -22,11 +26,22 @@ export default async function IntegracoesPage() {
   const isAdmin = session.user.role === 'ADMIN';
   const selectedCompanyId = await getSelectedCompanyId();
 
-  const [adminIntegrations, companyIntegrations, whatsappState, domainStatus] = await Promise.all([
+  const [
+    adminIntegrations, 
+    companyIntegrations, 
+    whatsappState, 
+    domainStatus, 
+    whatsappTemplate, 
+    proposalIntegration, 
+    companyData
+  ] = await Promise.all([
     isAdmin ? getIntegrationsServer() : Promise.resolve(null),
     selectedCompanyId ? getIntegrationsServer(selectedCompanyId) : Promise.resolve(null),
     selectedCompanyId ? getWhatsappConnectionStateServer(selectedCompanyId) : Promise.resolve(null),
     selectedCompanyId ? getDomainStatus(selectedCompanyId) : Promise.resolve(null),
+    selectedCompanyId ? getWhatsappTemplate().catch(() => null) : Promise.resolve(null),
+    selectedCompanyId ? getProposalIntegration().catch(() => ({ webUrl: '' })) : Promise.resolve(null),
+    selectedCompanyId ? apiClient(`/v1/companies/${selectedCompanyId}`).then(res => res.json()).catch(() => null) : Promise.resolve(null),
   ]);
 
   return (
@@ -66,7 +81,7 @@ export default async function IntegracoesPage() {
             </p>
           </div>
 
-          <div className="pl-0 md:pl-10">
+          <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ResendCard
               initialApiKey={adminIntegrations.resend.apiKey ?? ''}
               initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
@@ -94,12 +109,14 @@ export default async function IntegracoesPage() {
             </p>
           </div>
 
-          <div className="pl-0 md:pl-10 grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <WhatsappCard
               companyId={selectedCompanyId}
               initialStatus={whatsappState?.status ?? 'DISCONNECTED'}
               qrcode={whatsappState?.qrcode ?? null}
               instanceName={whatsappState?.instanceName ?? null}
+              initialTemplate={whatsappTemplate?.template}
+              initialFollowUpTemplate={whatsappTemplate?.followUpTemplate}
             />
 
             {companyIntegrations && (
@@ -113,6 +130,14 @@ export default async function IntegracoesPage() {
                 initialStatus={domainStatus?.status ?? 'not_started'}
                 initialRecords={domainStatus?.records ?? []}
               />
+            )}
+
+            <ProposalDomainCard 
+              initialWebUrl={proposalIntegration?.webUrl || ''} 
+            />
+
+            {companyData && (
+              <NotificationsCard company={companyData} />
             )}
           </div>
         </section>

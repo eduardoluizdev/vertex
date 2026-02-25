@@ -21,6 +21,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { updateResendIntegration, testResendConnection } from '../_actions/integrations-actions';
 import {
@@ -258,52 +259,56 @@ export function ResendCard({
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm transition-all hover:shadow-md col-span-full">
-      {/* Card Header */}
-      <div className="relative overflow-hidden px-6 py-5 border-b border-border bg-gradient-to-r from-violet-500/5 via-transparent to-blue-500/5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex size-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-blue-600 shadow-lg shadow-violet-500/20">
-              <Mail className="size-6 text-white" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-semibold text-foreground">Resend & Email</h2>
-                <a
-                  href="https://resend.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <ExternalLink className="size-3.5" />
-                </a>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Envio transacional de emails e configuração de domínio próprio
-              </p>
-            </div>
+    <Sheet>
+      <SheetTrigger asChild>
+        <div className="rounded-xl border border-border bg-card p-5 cursor-pointer hover:border-violet-500/50 transition-colors group h-full">
+          <div className="flex items-center gap-4 mb-3">
+             <div className="flex size-10 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500 group-hover:scale-110 transition-transform">
+               <Mail className="size-5" />
+             </div>
+             <div className="flex-1">
+               <h3 className="font-semibold text-foreground">Resend API</h3>
+               <p className="text-xs text-muted-foreground line-clamp-1">E-mail Transacional</p>
+             </div>
           </div>
-
-          <div
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border ${
-              configured
-                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'
-                : 'bg-amber-500/10 text-amber-500 border-amber-500/20'
-            }`}
-          >
-            <div
-              className={`size-1.5 rounded-full ${configured ? 'bg-emerald-500' : 'bg-amber-500'} animate-pulse`}
-            />
-            {configured ? 'Conectado' : 'Não conectado'}
+          <div>
+            <div className={`text-xs font-medium px-2.5 py-1 rounded-full inline-flex items-center gap-1.5 border ${configured ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+              <div className={`size-1.5 rounded-full ${configured ? 'bg-emerald-500' : 'bg-amber-500'} ${!configured && 'animate-pulse'}`} />
+              {configured ? 'Conectado' : 'Pendente'}
+            </div>
           </div>
         </div>
-      </div>
+      </SheetTrigger>
 
-      <div className="divide-y divide-border">
+      <SheetContent className="sm:max-w-[600px] w-full p-0 flex flex-col h-full sm:h-auto sm:max-h-[100dvh]">
+        <SheetHeader className="px-6 py-6 border-b border-border/50 bg-muted/10 shrink-0">
+          <div className="flex items-center justify-between">
+            <div>
+              <SheetTitle className="text-xl">Resend & E-mail</SheetTitle>
+              <SheetDescription>Assinatura de envios e chaves de API.</SheetDescription>
+            </div>
+            <a href="https://resend.com" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground">
+              <ExternalLink className="size-4" />
+            </a>
+          </div>
+        </SheetHeader>
+        
+        <div className="p-6 flex-1 overflow-y-auto space-y-6">
+
         {/* Section 1: Credenciais */}
-        <div className="p-6">
-          <h3 className="text-sm font-semibold text-foreground mb-4">1. Credenciais da API</h3>
-          <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+           <div className="p-5 bg-muted/10 border-b border-border/50 flex items-center gap-3">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500">
+                <Key className="size-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Credenciais da API</h3>
+                <p className="text-sm text-muted-foreground mt-0.5 tracking-tight">Configure sua chave de acesso do Resend.</p>
+              </div>
+           </div>
+           
+           <div className="p-6">
+             <form onSubmit={handleSubmit} className="space-y-4 max-w-2xl">
             <div className="space-y-2">
               <label htmlFor="resendApiKey" className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Key className="size-4 text-violet-400" />
@@ -360,27 +365,25 @@ export function ResendCard({
                 Salvar Chave
               </Button>
             </div>
-            
-            {saveResult && (
-              <div className={`flex items-start gap-3 rounded-lg border p-3 w-fit text-sm mt-3 ${saveResult.success ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-red-500/20 bg-red-500/10 text-red-400'}`}>
-                {saveResult.success ? <CheckCircle2 className="size-4 mt-0.5 shrink-0" /> : <XCircle className="size-4 mt-0.5 shrink-0" />}
-                {saveResult.message}
-              </div>
-            )}
-          </form>
+           </form>
+           </div>
         </div>
 
         {/* Section 2: Domain (Only if companyId is present, meant for companies) */}
         {companyId && (
-          <div className={`p-6 ${!configured ? 'opacity-50 pointer-events-none grayscale-[0.5] transition-all' : ''}`}>
-            <h3 className="text-sm font-semibold text-foreground mb-1">
-              2. Domínio Remetente
-            </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              {configured ? 'Cadastre e verifique um domínio no Resend para fazer envios autorizados.' : 'Configure e salve a Chave de API primeiro para configurar o domínio.'}
-            </p>
-
-            <div className="max-w-3xl space-y-4">
+          <div className={`rounded-2xl border border-border bg-card overflow-hidden transition-all ${!configured ? 'opacity-50 pointer-events-none grayscale-[0.5]' : ''}`}>
+             <div className="p-5 bg-muted/10 border-b border-border/50 flex items-center gap-3">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
+                  <Globe className="size-4" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-foreground">Domínio Remetente</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5 tracking-tight">{configured ? 'Cadastre e verifique um domínio no Resend para fazer envios autorizados.' : 'Configure e salve a Chave de API primeiro para configurar o domínio.'}</p>
+                </div>
+             </div>
+             
+             <div className="p-6">
+               <div className="max-w-3xl space-y-4">
               {!hasDomain ? (
                 <form onSubmit={handleCreateDomainUser} className="flex gap-3 max-w-md items-end">
                   <div className="flex-1 space-y-2">
@@ -487,15 +490,24 @@ export function ResendCard({
                 </div>
               )}
             </div>
+             </div>
           </div>
         )}
 
         {/* Section 3: Remetente Principal */}
-        <div className={`p-6 ${!configured ? 'opacity-50 pointer-events-none grayscale-[0.5] transition-all' : ''}`}>
-          <h3 className="text-sm font-semibold text-foreground mb-4">
-            3. Endereço do Remetente
-          </h3>
-          <form
+        <div className={`rounded-2xl border border-border bg-card overflow-hidden transition-all ${!configured ? 'opacity-50 pointer-events-none grayscale-[0.5]' : ''}`}>
+           <div className="p-5 bg-muted/10 border-b border-border/50 flex items-center gap-3">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
+                <Mail className="size-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Endereço do Remetente</h3>
+                <p className="text-sm text-muted-foreground mt-0.5 tracking-tight">Email usado no campo "De:" para os envios.</p>
+              </div>
+           </div>
+           
+           <div className="p-6">
+             <form
             onSubmit={(e) => {
               e.preventDefault();
               // Create a dummy form data to submit just this section or reuse the state
@@ -544,10 +556,13 @@ export function ResendCard({
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
               Salvar Endereço
             </Button>
-          </form>
+             </form>
+           </div>
         </div>
-      </div>
-    </div>
+        
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

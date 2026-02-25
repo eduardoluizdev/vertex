@@ -198,15 +198,6 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                 collapsed={collapsed}
               />
             )}
-            {filterBySearch('Configurações') && (
-              <NavItem
-                href="/settings"
-                icon={Settings}
-                label="Configurações"
-                isActive={pathname === '/settings'}
-                collapsed={collapsed}
-              />
-            )}
             {filterBySearch('Segurança') && (
               <NavItem
                 href="/security"

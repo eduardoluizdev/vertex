@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsBoolean, IsInt } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCompanyDto {
@@ -29,4 +29,19 @@ export class CreateCompanyDto {
   @IsOptional()
   @IsString()
   cnpj?: string;
+
+  @ApiPropertyOptional({ example: true })
+  @IsOptional()
+  @IsBoolean()
+  expirationWarningEnabled?: boolean;
+
+  @ApiPropertyOptional({ example: 2 })
+  @IsOptional()
+  @IsInt()
+  expirationWarningDays?: number;
+
+  @ApiPropertyOptional({ example: '09:00' })
+  @IsOptional()
+  @IsString()
+  dispatchTime?: string;
 }

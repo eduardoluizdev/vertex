@@ -93,6 +93,11 @@ model Company {
   cnpj      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Notification Settings
+  expirationWarningEnabled Boolean @default(true)
+  expirationWarningDays    Int     @default(2)
+  dispatchTime             String  @default("09:00")
 
   customers Customer[]
   services Service[]
