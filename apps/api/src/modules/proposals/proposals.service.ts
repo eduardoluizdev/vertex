@@ -186,9 +186,11 @@ export class ProposalsService {
     await this.prisma.proposal.delete({ where: { id } });
   }
 
-  async sendWhatsapp(companyId: string, id: string) {
+  async sendWhatsapp(companyId: string, id: string, isFollowUp: boolean = false) {
     const proposal = await this.findOne(companyId, id);
     
+    // Para follow-up, permite se o status estiver SENT, DRAFT, etc. 
+    // Se quiser bloquear follow-up em APPROVED/REJECTED, a regra é igual.
     if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
       throw new BadRequestException('Não é possível reenviar mensagem para uma proposta já aprovada ou reprovada.');
     }
@@ -201,9 +203,12 @@ export class ProposalsService {
       where: { companyId },
     });
 
-    const defaultTemplate =
-      'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#';
-    const template = tplRecord?.template ?? defaultTemplate;
+    let template = '';
+    if (isFollowUp) {
+      template = tplRecord?.followUpTemplate || 'Olá #CLIENTE#, tudo bem? Gostaria de saber se conseguiu avaliar nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Qualquer dúvida estou à disposição!';
+    } else {
+      template = tplRecord?.template || 'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#';
+    }
 
     const integration = await this.prisma.integrationConfig.findFirst({
       where: { provider: PROPOSAL_PROVIDER, companyId },
@@ -232,11 +237,13 @@ export class ProposalsService {
 
     await this.whatsappService.sendMessage(companyId, phone, message);
 
-    // Marcar como enviado
-    await this.prisma.proposal.update({
-      where: { id: proposal.id },
-      data: { status: 'SENT' as any },
-    });
+    if (!isFollowUp) {
+      // Marcar como enviado apenas no envio original (opcional)
+      await this.prisma.proposal.update({
+        where: { id: proposal.id },
+        data: { status: 'SENT' as any },
+      });
+    }
 
     return { ok: true };
   }
@@ -247,11 +254,18 @@ export class ProposalsService {
     });
   }
 
-  async upsertWhatsappTemplate(companyId: string, template: string) {
+  async upsertWhatsappTemplate(companyId: string, template: string, followUpTemplate?: string) {
     return this.prisma.proposalWhatsappTemplate.upsert({
       where: { companyId },
-      update: { template },
-      create: { companyId, template },
+      update: { 
+        template,
+        ...(followUpTemplate !== undefined && { followUpTemplate }),
+      },
+      create: { 
+        companyId, 
+        template,
+        ...(followUpTemplate !== undefined && { followUpTemplate }),
+      },
     });
   }
 

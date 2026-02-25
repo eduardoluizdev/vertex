@@ -18,26 +18,36 @@ const VARIABLES = [
 
 interface WhatsappTemplateFormProps {
   initialTemplate?: string;
+  initialFollowUpTemplate?: string;
 }
 
-export function WhatsappTemplateForm({ initialTemplate }: WhatsappTemplateFormProps) {
+export function WhatsappTemplateForm({ initialTemplate, initialFollowUpTemplate }: WhatsappTemplateFormProps) {
   const [template, setTemplate] = useState(
     initialTemplate ??
       'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#',
   );
+  const [followUpTemplate, setFollowUpTemplate] = useState(
+    initialFollowUpTemplate ??
+      'Olá #CLIENTE#, tudo bem? Gostaria de saber se conseguiu avaliar nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Qualquer dúvida estou à disposição!',
+  );
+  const [activeField, setActiveField] = useState<'template' | 'followUp'>('template');
   const [isPending, startTransition] = useTransition();
 
   const insertVariable = (variable: string) => {
-    setTemplate((prev) => prev + variable);
+    if (activeField === 'template') {
+      setTemplate((prev) => prev + variable);
+    } else {
+      setFollowUpTemplate((prev) => prev + variable);
+    }
   };
 
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await saveWhatsappTemplate(template);
-        toast.success('Template salvo com sucesso!');
+        await saveWhatsappTemplate(template, followUpTemplate);
+        toast.success('Templates salvos com sucesso!');
       } catch {
-        toast.error('Erro ao salvar template');
+        toast.error('Erro ao salvar templates');
       }
     });
   };
@@ -61,17 +71,33 @@ export function WhatsappTemplateForm({ initialTemplate }: WhatsappTemplateFormPr
         Clique nas variáveis acima para inserir no texto.
       </p>
 
-      <Textarea
-        value={template}
-        onChange={(e) => setTemplate(e.target.value)}
-        rows={4}
-        placeholder="Digite sua mensagem..."
-        className="font-mono text-sm"
-      />
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Mensagem de Envio de Proposta</label>
+        <Textarea
+          value={template}
+          onChange={(e) => setTemplate(e.target.value)}
+          onFocus={() => setActiveField('template')}
+          rows={20}
+          placeholder="Digite a mensagem de envio..."
+          className={`font-mono text-sm ${activeField === 'template' ? 'border-primary' : ''}`}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Mensagem de Follow-up</label>
+        <Textarea
+          value={followUpTemplate}
+          onChange={(e) => setFollowUpTemplate(e.target.value)}
+          onFocus={() => setActiveField('followUp')}
+          rows={20}
+          placeholder="Digite a mensagem de follow-up..."
+          className={`font-mono text-sm ${activeField === 'followUp' ? 'border-primary' : ''}`}
+        />
+      </div>
 
       <Button onClick={handleSave} disabled={isPending} size="sm">
         <Save className="h-4 w-4 mr-2" />
-        {isPending ? 'Salvando...' : 'Salvar Template'}
+        {isPending ? 'Salvando...' : 'Salvar Templates'}
       </Button>
     </div>
   );

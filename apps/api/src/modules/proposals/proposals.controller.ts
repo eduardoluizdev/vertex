@@ -60,7 +60,11 @@ export class ProposalsController {
     @Param('companyId') companyId: string,
     @Body() body: any,
   ) {
-    return this.proposalsService.upsertWhatsappTemplate(companyId, body.template);
+    return this.proposalsService.upsertWhatsappTemplate(
+      companyId, 
+      body.template, 
+      body.followUpTemplate
+    );
   }
 
   @Get('integration')
@@ -109,6 +113,15 @@ export class ProposalsController {
     @Param('id') id: string,
   ) {
     return this.proposalsService.sendWhatsapp(companyId, id);
+  }
+
+  @Post(':id/send-whatsapp-followup')
+  @HttpCode(HttpStatus.OK)
+  sendWhatsappFollowup(
+    @Param('companyId') companyId: string,
+    @Param('id') id: string,
+  ) {
+    return this.proposalsService.sendWhatsapp(companyId, id, true);
   }
 
   @Delete(':id')

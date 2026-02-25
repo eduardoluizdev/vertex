@@ -113,10 +113,11 @@ export class DashboardService {
       throw new NotFoundException('Company not found');
     }
 
-    const [totals, customersCreatedAt, servicesByRecurrence] = await Promise.all([
+    const [totals, customersCreatedAt, servicesByRecurrence, proposalsByStatus] = await Promise.all([
       this.getCompanyTotals(companyId),
       this.getCustomersCreatedAt(companyId),
       this.getServicesByRecurrenceForCompany(companyId),
+      this.getProposalsByStatusForCompany(companyId),
     ]);
 
     const customersByMonth = this.aggregateByMonth(customersCreatedAt);
@@ -127,6 +128,10 @@ export class DashboardService {
       servicesByRecurrence: servicesByRecurrence.map((s) => ({
         recurrence: s.recurrence,
         count: s._count.id,
+      })),
+      proposalsByStatus: proposalsByStatus.map((p) => ({
+        status: p.status,
+        count: p._count.id,
       })),
     };
   }
@@ -180,6 +185,14 @@ export class DashboardService {
   private async getServicesByRecurrenceForCompany(companyId: string) {
     return this.prisma.service.groupBy({
       by: ['recurrence'],
+      where: { companyId },
+      _count: { id: true },
+    });
+  }
+
+  private async getProposalsByStatusForCompany(companyId: string) {
+    return this.prisma.proposal.groupBy({
+      by: ['status'],
       where: { companyId },
       _count: { id: true },
     });

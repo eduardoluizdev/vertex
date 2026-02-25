@@ -12,6 +12,7 @@ export default async function SettingsPage() {
     getProposalIntegration().catch(() => ({ webUrl: '' })),
   ]);
   const currentTemplate = tplRecord?.template;
+  const currentFollowUpTemplate = tplRecord?.followUpTemplate;
   return (
     <div className="min-h-screen p-6 md:p-8 space-y-10 max-w-7xl mx-auto">
       {/* Page Header */}
@@ -141,7 +142,10 @@ export default async function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
-              <WhatsappTemplateForm initialTemplate={currentTemplate} />
+              <WhatsappTemplateForm 
+                initialTemplate={currentTemplate} 
+                initialFollowUpTemplate={currentFollowUpTemplate} 
+              />
             </CardContent>
           </Card>
         </div>

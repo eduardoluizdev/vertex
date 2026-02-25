@@ -3,7 +3,9 @@ import { apiClient } from '@/lib/api';
 import { ServicesByRecurrenceChart } from '../../_components/services-by-recurrence-chart';
 import { CompanyStatsCards } from './_components/company-stats-cards';
 import { CustomersByMonthChart } from './_components/customers-by-month-chart';
-import { LayoutDashboard, CalendarClock, MessageCircle } from 'lucide-react';
+import { ProposalsByStatusChart } from './_components/proposals-by-status-chart';
+import { FollowUpButton } from './_components/follow-up-button';
+import { LayoutDashboard, CalendarClock } from 'lucide-react';
 import { getFollowUpToday } from '@/app/(dashboard)/propostas/_actions/proposal-actions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -17,6 +19,7 @@ export type CompanyDashboardStats = {
   totals: { customers: number; services: number };
   customersByMonth: { month: string; count: number }[];
   servicesByRecurrence: { recurrence: string; count: number }[];
+  proposalsByStatus?: { status: string; count: number }[];
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -65,11 +68,6 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
           </div>
           <div className="divide-y">
             {followUpProposals.map((proposal: any) => {
-              const rawPhone = (proposal.customer?.phone ?? '').replace(/\D/g, '');
-              const waPhone = rawPhone.length === 10 || rawPhone.length === 11
-                ? `55${rawPhone}`
-                : rawPhone;
-
               return (
                 <div
                   key={proposal.id}
@@ -91,17 +89,7 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
                     </p>
                   </div>
 
-                  {waPhone && (
-                    <a
-                      href={`https://wa.me/${waPhone}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shrink-0"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      {proposal.customer?.phone}
-                    </a>
-                  )}
+                  <FollowUpButton proposalId={proposal.id} />
                 </div>
               );
             })}
@@ -112,6 +100,10 @@ export default async function CompanyPage({ params }: CompanyPageProps) {
       <div className="grid gap-8 lg:grid-cols-2">
         <CustomersByMonthChart data={stats.customersByMonth} />
         <ServicesByRecurrenceChart data={stats.servicesByRecurrence} />
+      </div>
+
+      <div className="grid gap-8 lg:grid-cols-2">
+        <ProposalsByStatusChart data={stats.proposalsByStatus} />
       </div>
     </div>
   );

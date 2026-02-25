@@ -270,11 +270,12 @@ model ProposalItem {
 }
 
 model ProposalWhatsappTemplate {
-  id        String   @id @default(uuid())
-  template  String   @db.Text
-  companyId String   @unique
-  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  updatedAt DateTime @updatedAt
+  id               String   @id @default(uuid())
+  template         String   @db.Text
+  followUpTemplate String?  @db.Text
+  companyId        String   @unique
+  company          Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  updatedAt        DateTime @updatedAt
 
   @@map("proposal_whatsapp_templates")
 }

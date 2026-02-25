@@ -137,6 +137,31 @@ export async function sendProposalWhatsapp(id: string) {
   }
 }
 
+export async function sendProposalFollowUp(id: string) {
+  const companyId = await getSelectedCompanyId();
+  if (!companyId) return { error: 'Empresa não selecionada' };
+
+  try {
+    const res = await apiClient(
+      `/v1/companies/${companyId}/proposals/${id}/send-whatsapp-followup`,
+      { method: 'POST' },
+    );
+
+    if (!res.ok) {
+      const errText = await res.text();
+      let errorMsg = errText;
+      try {
+        const json = JSON.parse(errText);
+        errorMsg = json.message || errText;
+      } catch (e) {}
+      return { error: `Erro da API: ${errorMsg}` };
+    }
+    return { success: true, data: await res.json() };
+  } catch (err: any) {
+    return { error: 'Falha de conexão com a API: ' + err.message };
+  }
+}
+
 export async function getCustomers() {
   const companyId = await getSelectedCompanyId();
   if (!companyId) return [];
@@ -171,7 +196,7 @@ export async function getWhatsappTemplate() {
   return res.json();
 }
 
-export async function saveWhatsappTemplate(template: string) {
+export async function saveWhatsappTemplate(template: string, followUpTemplate?: string) {
   const companyId = await getSelectedCompanyId();
   if (!companyId) throw new Error('Empresa não selecionada');
 
@@ -179,7 +204,7 @@ export async function saveWhatsappTemplate(template: string) {
     `/v1/companies/${companyId}/proposals/whatsapp-template`,
     {
       method: 'PUT',
-      body: JSON.stringify({ template }),
+      body: JSON.stringify({ template, followUpTemplate }),
     },
   );
 
