@@ -1,5 +1,5 @@
 import { FileText } from 'lucide-react';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { CompanyContextBreadcrumb } from '@/components/company-context-breadcrumb';
 import { ProposalForm } from '../_components/proposal-form';
 import { getCustomers, getServices } from '../_actions/proposal-actions';
 
@@ -11,7 +11,7 @@ export default async function NovaPropostaPage() {
 
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <Breadcrumb
+      <CompanyContextBreadcrumb
         items={[
           { label: 'Propostas', href: '/propostas', icon: FileText },
           { label: 'Nova Proposta' },

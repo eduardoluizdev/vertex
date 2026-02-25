@@ -20,6 +20,7 @@
     "next": "^16",
     "next-auth": "^5.0.0-beta.30",
     "next-client-cookies": "^2.1.0",
+    "next-themes": "^0.4.6",
     "quill-magic-url": "^4.2.0",
     "radix-ui": "^1.4.3",
     "react": "^19",

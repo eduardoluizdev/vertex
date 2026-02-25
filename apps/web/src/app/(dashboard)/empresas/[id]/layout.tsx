@@ -3,9 +3,8 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, Pencil } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { CompanyTabsModern } from './_components/company-tabs-modern';
 import { SyncCompanyCookie } from './_components/sync-company-cookie';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { CompanyBreadcrumb } from './_components/company-breadcrumb';
 
 interface CompanyLayoutProps {
   children: React.ReactNode;
@@ -30,12 +29,7 @@ export default async function CompanyLayout({
       <SyncCompanyCookie companyId={id} />
       
       {/* Breadcrumb */}
-      <Breadcrumb
-        items={[
-          { label: 'Empresas', href: '/empresas' },
-          { label: company.name },
-        ]}
-      />
+      <CompanyBreadcrumb companyId={id} companyName={company.name} />
 
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -62,9 +56,6 @@ export default async function CompanyLayout({
           </Button>
         </div>
       </div>
-
-      {/* Modern tabs */}
-      <CompanyTabsModern companyId={id} />
 
       {/* Content */}
       <div className="mt-6">{children}</div>

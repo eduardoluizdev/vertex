@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Plus, FileText } from 'lucide-react';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { CompanyContextBreadcrumb } from '@/components/company-context-breadcrumb';
 import { getProposals, getCustomers, getProposalIntegration } from './_actions/proposal-actions';
 import { ProposalFilters } from './_components/proposal-filters';
 import { ProposalRow } from './_components/proposal-row';
@@ -20,7 +20,7 @@ export default async function PropostasPage({ searchParams }: PropostasPageProps
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb items={[{ label: 'Propostas', icon: FileText }]} />
+      <CompanyContextBreadcrumb items={[{ label: 'Propostas', icon: FileText }]} />
 
       {/* Header */}
       <div className="relative">

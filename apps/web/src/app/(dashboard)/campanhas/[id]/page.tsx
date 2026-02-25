@@ -3,7 +3,7 @@ import { createCampaign, getCampaign, updateCampaign, sendCampaign } from '../_a
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Send, Mail, Edit, Plus } from 'lucide-react';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { CompanyContextBreadcrumb } from '@/components/company-context-breadcrumb';
 import { getSelectedCompanyId } from '@/lib/cookies';
 import { apiClient } from '@/lib/api';
 
@@ -46,7 +46,7 @@ export default async function CampaignEditPage({ params }: PageProps) {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <Breadcrumb
+      <CompanyContextBreadcrumb
         items={[
           { label: 'Campanhas', href: '/campanhas', icon: Mail },
           { label: isNew ? 'Nova' : 'Editar', icon: isNew ? Plus : Edit }

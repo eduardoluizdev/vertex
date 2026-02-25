@@ -5,7 +5,7 @@ import { Plus, Mail, MessageCircle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Breadcrumb } from '@/components/breadcrumb';
+import { CompanyContextBreadcrumb } from '@/components/company-context-breadcrumb';
 
 const statusMap: Record<string, string> = {
   DRAFT: 'Rascunho',
@@ -20,7 +20,7 @@ export default async function CampaignsPage() {
 
   return (
     <div className="p-6 space-y-6">
-      <Breadcrumb
+      <CompanyContextBreadcrumb
         items={[{ label: 'Campanhas', icon: Mail }]}
       />
 
