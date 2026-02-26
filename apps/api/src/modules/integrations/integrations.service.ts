@@ -6,6 +6,7 @@ import { UpdateIntegrationsDto } from './dto/update-integrations.dto';
 export const RESEND_PROVIDER = 'resend';
 export const ASAAS_PROVIDER = 'asaas';
 export const ABACATEPAY_PROVIDER = 'abacatepay';
+export const GOOGLE_ANALYTICS_PROVIDER = 'googleAnalytics';
 
 /** Instancia o cliente Resend sempre com a região São Paulo (sa-east-1) */
 function createResendClient(apiKey: string): Resend {
@@ -31,6 +32,10 @@ interface AsaasConfig {
 interface AbacatePayConfig {
   apiKey?: string;
   isSandbox?: boolean;
+}
+
+interface GoogleAnalyticsConfig {
+  trackingId?: string;
 }
 
 @Injectable()
@@ -92,6 +97,16 @@ export class IntegrationsService {
     const abacatePayApiKey = abacatePayCfg.apiKey ?? '';
     const isAbacatePayConfigured = abacatePayApiKey.length > 5;
 
+    const googleAnalyticsRow = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: GOOGLE_ANALYTICS_PROVIDER,
+        companyId: companyId || null,
+      },
+    });
+    const googleAnalyticsCfg = (googleAnalyticsRow?.config ?? {}) as GoogleAnalyticsConfig;
+    const trackingId = googleAnalyticsCfg.trackingId ?? '';
+    const isGoogleAnalyticsConfigured = trackingId.startsWith('G-');
+
     return {
       resend: {
         name: row?.name ?? 'Resend',
@@ -117,6 +132,13 @@ export class IntegrationsService {
         apiKey: abacatePayApiKey,
         isConfigured: isAbacatePayConfigured,
         isSandbox: abacatePayCfg.isSandbox ?? false,
+      },
+      googleAnalytics: {
+        name: googleAnalyticsRow?.name ?? 'Google Analytics',
+        provider: GOOGLE_ANALYTICS_PROVIDER,
+        enabled: googleAnalyticsRow?.enabled ?? true,
+        trackingId,
+        isConfigured: isGoogleAnalyticsConfigured,
       }
     };
   }
@@ -132,6 +154,15 @@ export class IntegrationsService {
       if (!apiKey.startsWith('re_')) {
         throw new BadRequestException(
           'RESEND_API_KEY inválida. Deve começar com "re_".',
+        );
+      }
+    }
+
+    if (provider === GOOGLE_ANALYTICS_PROVIDER && dto.config?.trackingId) {
+      const trackingId = dto.config.trackingId as string;
+      if (!trackingId.startsWith('G-')) {
+        throw new BadRequestException(
+          'Tracking ID inválido. Deve começar com "G-".',
         );
       }
     }

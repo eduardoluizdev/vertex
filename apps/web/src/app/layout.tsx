@@ -3,6 +3,8 @@ import { Toaster } from 'sonner';
 import './globals.css';
 import { AuthSessionProvider } from '@/components/providers/session-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
+import { getIntegrationsServer } from '@/lib/services/integrations';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 export const metadata: Metadata = {
   title: 'VertexHub',
@@ -14,11 +16,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const adminIntegrations = await getIntegrationsServer();
+  const gaId = adminIntegrations?.googleAnalytics?.trackingId || '';
+  const gaEnabled = adminIntegrations?.googleAnalytics?.enabled !== false;
+
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="antialiased">
@@ -31,6 +37,9 @@ export default function RootLayout({
           <AuthSessionProvider>{children}</AuthSessionProvider>
           <Toaster richColors position="top-right" />
         </ThemeProvider>
+        {gaEnabled && gaId && gaId.startsWith('G-') && (
+          <GoogleAnalytics gaId={gaId} />
+        )}
       </body>
     </html>
   );

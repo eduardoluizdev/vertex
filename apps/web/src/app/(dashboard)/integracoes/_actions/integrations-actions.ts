@@ -256,3 +256,46 @@ export async function removeIntegrationAction(provider: string, companyId?: stri
     return { success: false, message: 'Erro de comunicação com o servidor.' };
   }
 }
+
+export async function updateGoogleAnalyticsIntegration(
+  companyId: string | undefined, // Note: GA is typically global (companyId is undefined), but keeping signature for consistency
+  formData: FormData
+): Promise<{
+  success: boolean;
+  message: string;
+  data?: IntegrationsData;
+}> {
+  const trackingId = formData.get('trackingId') as string | null;
+  const enabled = formData.get('enabled') === 'true';
+
+  const config: Record<string, any> = {};
+  if (trackingId?.trim()) config.trackingId = trackingId.trim();
+
+  if (Object.keys(config).length === 0) {
+    return { success: false, message: 'Nenhuma alteração detectada.' };
+  }
+
+  try {
+    const url = companyId ? `/v1/integrations/googleAnalytics?companyId=${companyId}` : `/v1/integrations/googleAnalytics`;
+    const response = await apiClient(url, {
+      method: 'PATCH',
+      body: JSON.stringify({ config, enabled }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message:
+          (err as { message?: string }).message ?? 'Erro ao salvar configurações.',
+      };
+    }
+
+    const data = await response.json();
+    revalidatePath('/integracoes');
+    revalidatePath('/', 'layout'); // revalidate layout to apply GA globally
+    return { success: true, message: 'Configurações salvas com sucesso!', data };
+  } catch {
+    return { success: false, message: 'Erro de comunicação com o servidor.' };
+  }
+}

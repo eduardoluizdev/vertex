@@ -26,6 +26,13 @@ export interface IntegrationsData {
     isConfigured: boolean;
     isSandbox: boolean;
   };
+  googleAnalytics?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    trackingId: string;
+    isConfigured: boolean;
+  };
 }
 
 export async function getIntegrationsServer(companyId?: string): Promise<IntegrationsData | null> {

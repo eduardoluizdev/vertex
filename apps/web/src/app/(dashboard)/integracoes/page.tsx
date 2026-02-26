@@ -1,8 +1,9 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { Plug2, Mail, MessageSquare } from 'lucide-react';
+import { Plug2, Mail, MessageSquare, Globe } from 'lucide-react';
 import { getIntegrationsServer } from '@/lib/services/integrations';
 import { ResendCard } from './_components/resend-card';
+import { GoogleAnalyticsCard } from './_components/google-analytics-card';
 import { WhatsappCard } from './_components/whatsapp-card';
 import { AsaasCard } from './_components/asaas-card';
 import { AbacatePayCard } from './_components/abacatepay-card';
@@ -72,14 +73,14 @@ export default async function IntegracoesPage() {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
               <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
-                <Mail className="size-4 text-vibe-primary" />
+                <Globe className="size-4 text-vibe-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
-                Email (Global Admin)
+                Configurações Globais (Admin)
               </h2>
             </div>
             <p className="text-sm text-muted-foreground ml-10">
-              Configurações unificadas de disparo de emails para o sistema.
+              Configurações unificadas aplicadas a todo o sistema.
             </p>
           </div>
 
@@ -89,6 +90,10 @@ export default async function IntegracoesPage() {
               initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
               initialFromEmail={adminIntegrations.resend.fromEmail ?? ''}
               isConfigured={adminIntegrations.resend.isConfigured ?? false}
+            />
+            <GoogleAnalyticsCard
+              initialTrackingId={adminIntegrations.googleAnalytics?.trackingId ?? ''}
+              isConfigured={adminIntegrations.googleAnalytics?.isConfigured ?? false}
             />
           </div>
         </section>
