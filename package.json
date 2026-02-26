@@ -15,5 +15,9 @@
   "devDependencies": {
     "turbo": "^2"
   },
-  "packageManager": "npm@11.6.2"
+  "packageManager": "npm@11.6.2",
+  "dependencies": {
+    "abacatepay": "^1.0.1",
+    "abacatepay-nodejs-sdk": "^1.6.0"
+  }
 }

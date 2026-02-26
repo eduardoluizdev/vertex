@@ -10,6 +10,22 @@ export interface IntegrationsData {
     fromEmail: string;
     isConfigured: boolean;
   };
+  asaas?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    apiKey: string;
+    isConfigured: boolean;
+    isSandbox: boolean;
+  };
+  abacatepay?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    apiKey: string;
+    isConfigured: boolean;
+    isSandbox: boolean;
+  };
 }
 
 export async function getIntegrationsServer(companyId?: string): Promise<IntegrationsData | null> {
@@ -25,3 +41,4 @@ export async function getIntegrationsServer(companyId?: string): Promise<Integra
     return null;
   }
 }
+

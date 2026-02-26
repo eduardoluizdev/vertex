@@ -23,7 +23,7 @@ import {
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { updateResendIntegration, testResendConnection } from '../_actions/integrations-actions';
+import { updateResendIntegration, testResendConnection, removeIntegrationAction } from '../_actions/integrations-actions';
 import {
   createDomain,
   verifyDomain,
@@ -156,6 +156,7 @@ export function ResendCard({
   
   const [isSaving, startSave] = useTransition();
   const [isTesting, startTest] = useTransition();
+  const [isRemoving, startRemove] = useTransition();
 
   // Domain State
   const [domain, setDomain] = useState(initialDomain ?? '');
@@ -195,6 +196,30 @@ export function ResendCard({
     startTest(async () => {
       const result = await testResendConnection(companyId);
       setTestResult(result);
+    });
+  }
+
+  async function handleRemove() {
+    if (!confirm('Tem certeza que deseja remover esta integração?')) return;
+    
+    startRemove(async () => {
+      const result = await removeIntegrationAction('resend', companyId);
+      if (result.success) {
+        setApiKey('');
+        setFrontendUrl('');
+        setFromEmail('');
+        setConfigured(false);
+        setSaveResult(null);
+        setTestResult(null);
+        
+        // As a bonus, we clear domain states since they are part of the config
+        setDomain('');
+        setDomainStatus('not_started');
+        setRecords([]);
+        setShowRecords(false);
+      } else {
+        setSaveResult({ success: false, message: result.message });
+      }
     });
   }
 
@@ -364,6 +389,22 @@ export function ResendCard({
                 {isSaving ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}
                 Salvar Chave
               </Button>
+            </div>
+            
+            <div className="flex items-center justify-between mt-4">
+              {configured && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemove}
+                  disabled={isRemoving}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-500/10 gap-2"
+                >
+                  {isRemoving ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5" />}
+                  Remover Integração
+                </Button>
+              )}
             </div>
            </form>
            </div>

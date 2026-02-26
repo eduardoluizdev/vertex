@@ -36,6 +36,17 @@ export async function getProposal(id: string) {
   return res.json();
 }
 
+export async function getPaymentStatus(id: string) {
+  const companyId = await getSelectedCompanyId();
+  if (!companyId) return { status: 'ERROR', url: null };
+
+  const res = await apiClient(`/v1/companies/${companyId}/proposals/${id}/payment-status`, {
+    cache: 'no-store',
+  });
+  if (!res.ok) return { status: 'ERROR', url: null };
+  return res.json();
+}
+
 export async function getFollowUpToday() {
   const companyId = await getSelectedCompanyId();
   if (!companyId) return [];

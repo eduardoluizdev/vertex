@@ -4,6 +4,8 @@ import { Plug2, Mail, MessageSquare } from 'lucide-react';
 import { getIntegrationsServer } from '@/lib/services/integrations';
 import { ResendCard } from './_components/resend-card';
 import { WhatsappCard } from './_components/whatsapp-card';
+import { AsaasCard } from './_components/asaas-card';
+import { AbacatePayCard } from './_components/abacatepay-card';
 import { getWhatsappConnectionStateServer } from '@/lib/services/whatsapp';
 import { getSelectedCompanyId } from '@/lib/cookies';
 import { getDomainStatus } from './_actions/domain-actions';
@@ -94,53 +96,112 @@ export default async function IntegracoesPage() {
 
       {/* Section: Empresa integrations */}
       {selectedCompanyId && (
-        <section className="space-y-6">
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
-                <MessageSquare className="size-4 text-vibe-primary" />
+        <div className="space-y-10">
+          {/* Comunicação */}
+          <section className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                  <MessageSquare className="size-4 text-vibe-primary" />
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Comunicação
+                </h2>
               </div>
-              <h2 className="text-lg font-semibold text-foreground">
-                Comunicação (Empresa)
-              </h2>
+              <p className="text-sm text-muted-foreground ml-10">
+                Canais de atendimento, email e notificações.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground ml-10">
-              Canais de atendimento e comunicação específicos da sua empresa.
-            </p>
-          </div>
 
-          <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <WhatsappCard
-              companyId={selectedCompanyId}
-              initialStatus={whatsappState?.status ?? 'DISCONNECTED'}
-              qrcode={whatsappState?.qrcode ?? null}
-              instanceName={whatsappState?.instanceName ?? null}
-              initialTemplate={whatsappTemplate?.template}
-              initialFollowUpTemplate={whatsappTemplate?.followUpTemplate}
-            />
-
-            {companyIntegrations && (
-              <ResendCard
-                initialApiKey={companyIntegrations.resend.apiKey ?? ''}
-                initialFrontendUrl={companyIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
-                initialFromEmail={companyIntegrations.resend.fromEmail ?? ''}
-                isConfigured={companyIntegrations.resend.isConfigured ?? false}
+            <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <WhatsappCard
                 companyId={selectedCompanyId}
-                initialDomain={domainStatus?.domain ?? null}
-                initialStatus={domainStatus?.status ?? 'not_started'}
-                initialRecords={domainStatus?.records ?? []}
+                initialStatus={whatsappState?.status ?? 'DISCONNECTED'}
+                qrcode={whatsappState?.qrcode ?? null}
+                instanceName={whatsappState?.instanceName ?? null}
+                initialTemplate={whatsappTemplate?.template}
+                initialFollowUpTemplate={whatsappTemplate?.followUpTemplate}
               />
-            )}
 
-            <ProposalDomainCard 
-              initialWebUrl={proposalIntegration?.webUrl || ''} 
-            />
+              {companyIntegrations && (
+                <ResendCard
+                  initialApiKey={companyIntegrations.resend.apiKey ?? ''}
+                  initialFrontendUrl={companyIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
+                  initialFromEmail={companyIntegrations.resend.fromEmail ?? ''}
+                  isConfigured={companyIntegrations.resend.isConfigured ?? false}
+                  companyId={selectedCompanyId}
+                  initialDomain={domainStatus?.domain ?? null}
+                  initialStatus={domainStatus?.status ?? 'not_started'}
+                  initialRecords={domainStatus?.records ?? []}
+                />
+              )}
 
-            {companyData && (
-              <NotificationsCard company={companyData} />
-            )}
-          </div>
-        </section>
+              {companyData && (
+                <NotificationsCard company={companyData} />
+              )}
+            </div>
+          </section>
+
+          {/* Pagamentos */}
+          <section className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 text-vibe-primary"><rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/></svg>
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Pagamentos
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground ml-10">
+                Gateways de pagamento para suas propostas e serviços.
+              </p>
+            </div>
+
+            <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {companyIntegrations && (
+                <AsaasCard
+                  initialApiKey={companyIntegrations.asaas?.apiKey ?? ''}
+                  isConfigured={companyIntegrations.asaas?.isConfigured ?? false}
+                  initialIsSandbox={companyIntegrations.asaas?.isSandbox ?? false}
+                  companyId={selectedCompanyId}
+                />
+              )}
+
+              {companyIntegrations && (
+                <AbacatePayCard
+                  initialApiKey={companyIntegrations.abacatepay?.apiKey ?? ''}
+                  isConfigured={companyIntegrations.abacatepay?.isConfigured ?? false}
+                  initialIsSandbox={companyIntegrations.abacatepay?.isSandbox ?? false}
+                  companyId={selectedCompanyId}
+                />
+              )}
+            </div>
+          </section>
+
+          {/* Domínios & Links */}
+          <section className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-4 text-vibe-primary"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Domínios & Links
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground ml-10">
+                Configurações de domínios personalizados.
+              </p>
+            </div>
+
+            <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <ProposalDomainCard 
+                initialWebUrl={proposalIntegration?.webUrl || ''} 
+              />
+            </div>
+          </section>
+        </div>
       )}
     </div>
   );

@@ -47,6 +47,19 @@ export class IntegrationsController {
     return this.integrationsService.updateIntegrations(provider, dto, companyId);
   }
 
+  @Delete(':provider')
+  @ApiOperation({ summary: 'Remove a configured integration' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Integration removed successfully',
+  })
+  removeIntegration(
+    @Param('provider') provider: string,
+    @Query('companyId') companyId?: string,
+  ) {
+    return this.integrationsService.removeIntegration(provider, companyId);
+  }
+
   @Post(':provider/test')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Test connection for a given provider' })
@@ -60,6 +73,12 @@ export class IntegrationsController {
   ) {
     if (provider === 'resend') {
       return this.integrationsService.testResendConnection(companyId);
+    }
+    if (provider === 'asaas') {
+      return this.integrationsService.testAsaasConnection(companyId);
+    }
+    if (provider === 'abacatepay') {
+      return this.integrationsService.testAbacatePayConnection(companyId);
     }
     return { success: false, message: `Teste não implementado para "${provider}".` };
   }

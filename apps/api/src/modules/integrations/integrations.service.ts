@@ -4,6 +4,8 @@ import { PrismaService } from '../../prisma.service';
 import { UpdateIntegrationsDto } from './dto/update-integrations.dto';
 
 export const RESEND_PROVIDER = 'resend';
+export const ASAAS_PROVIDER = 'asaas';
+export const ABACATEPAY_PROVIDER = 'abacatepay';
 
 /** Instancia o cliente Resend sempre com a região São Paulo (sa-east-1) */
 function createResendClient(apiKey: string): Resend {
@@ -19,6 +21,16 @@ interface ResendConfig {
   domainId?: string;
   domain?: string;
   domainStatus?: 'pending' | 'verified' | 'failed' | 'not_started';
+}
+
+interface AsaasConfig {
+  apiKey?: string;
+  isSandbox?: boolean;
+}
+
+interface AbacatePayConfig {
+  apiKey?: string;
+  isSandbox?: boolean;
 }
 
 @Injectable()
@@ -60,6 +72,26 @@ export class IntegrationsService {
 
     const isConfigured = apiKey.startsWith('re_') && apiKey.length > 10;
 
+    const asaasRow = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: ASAAS_PROVIDER,
+        companyId: companyId || null,
+      },
+    });
+    const asaasCfg = (asaasRow?.config ?? {}) as AsaasConfig;
+    const asaasApiKey = asaasCfg.apiKey ?? '';
+    const isAsaasConfigured = asaasApiKey.length > 5;
+
+    const abacatePayRow = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: ABACATEPAY_PROVIDER,
+        companyId: companyId || null,
+      },
+    });
+    const abacatePayCfg = (abacatePayRow?.config ?? {}) as AbacatePayConfig;
+    const abacatePayApiKey = abacatePayCfg.apiKey ?? '';
+    const isAbacatePayConfigured = abacatePayApiKey.length > 5;
+
     return {
       resend: {
         name: row?.name ?? 'Resend',
@@ -70,6 +102,22 @@ export class IntegrationsService {
         fromEmail,
         isConfigured,
       },
+      asaas: {
+        name: asaasRow?.name ?? 'Asaas',
+        provider: ASAAS_PROVIDER,
+        enabled: asaasRow?.enabled ?? true,
+        apiKey: asaasApiKey,
+        isConfigured: isAsaasConfigured,
+        isSandbox: asaasCfg.isSandbox ?? false,
+      },
+      abacatepay: {
+        name: abacatePayRow?.name ?? 'AbacatePay',
+        provider: ABACATEPAY_PROVIDER,
+        enabled: abacatePayRow?.enabled ?? true,
+        apiKey: abacatePayApiKey,
+        isConfigured: isAbacatePayConfigured,
+        isSandbox: abacatePayCfg.isSandbox ?? false,
+      }
     };
   }
 
@@ -122,7 +170,28 @@ export class IntegrationsService {
 
     this.logger.log(`Integration "${provider}" updated in database`);
 
-    return this.getIntegrations();
+    return this.getIntegrations(companyId);
+  }
+
+  /**
+   * Removes an integration config completely.
+   */
+  async removeIntegration(provider: string, companyId?: string) {
+    const resolvedCompanyId = companyId || null;
+    const existing = await this.prisma.integrationConfig.findFirst({
+      where: { provider, companyId: resolvedCompanyId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Integração "${provider}" não encontrada.`);
+    }
+
+    await this.prisma.integrationConfig.delete({
+      where: { id: existing.id },
+    });
+
+    this.logger.log(`Integration "${provider}" removed from database`);
+    return { success: true, message: `Integração removida com sucesso.` };
   }
 
   /**
@@ -336,4 +405,120 @@ export class IntegrationsService {
       };
     }
   }
+
+  /**
+   * Tests the Asaas connection using the key from DB.
+   */
+  async testAsaasConnection(companyId?: string): Promise<{ success: boolean; message: string }> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: ASAAS_PROVIDER,
+        companyId: companyId || null,
+      },
+    });
+
+    const cfg = (row?.config ?? {}) as AsaasConfig;
+    const apiKey = cfg.apiKey ?? '';
+    const isSandbox = cfg.isSandbox ?? false;
+    const baseUrl = isSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
+
+    if (!apiKey) {
+      return {
+        success: false,
+        message: 'API Key do Asaas não está configurada.',
+      };
+    }
+
+    try {
+      const response = await fetch(`${baseUrl}/finance/balance`, {
+        headers: {
+          access_token: apiKey,
+        }
+      });
+
+      if (!response.ok) {
+        let errorMsg = 'resposta inválida';
+        try {
+          const errData = await response.json();
+          errorMsg = JSON.stringify(errData.errors || errData);
+        } catch {}
+        this.logger.warn(`Asaas connection test failed: ${errorMsg}`);
+        return {
+          success: false,
+          message: 'Falha na conexão com Asaas. Verifique sua API Key.',
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Conexão com Asaas estabelecida com sucesso!',
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      this.logger.error('Error testing Asaas connection', err);
+      return {
+        success: false,
+        message: `Erro ao conectar com Asaas: ${message}`,
+      };
+    }
+  }
+
+  /**
+   * Tests the AbacatePay connection using the key from DB.
+   */
+  async testAbacatePayConnection(companyId?: string): Promise<{ success: boolean; message: string }> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: ABACATEPAY_PROVIDER,
+        companyId: companyId || null,
+      },
+    });
+
+    const cfg = (row?.config ?? {}) as AbacatePayConfig;
+    const apiKey = cfg.apiKey ?? '';
+    const isSandbox = cfg.isSandbox ?? false;
+
+    if (!apiKey) {
+      return {
+        success: false,
+        message: 'API Key da AbacatePay não está configurada.',
+      };
+    }
+
+    const baseUrl = 'https://api.abacatepay.com/v1';
+
+    try {
+      const response = await fetch(`${baseUrl}/billing/list`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+        }
+      });
+
+      if (!response.ok) {
+        let errorMsg = 'resposta inválida';
+        try {
+          const errData = await response.json();
+          errorMsg = JSON.stringify(errData.error || errData);
+        } catch {}
+        this.logger.warn(`AbacatePay connection test failed: ${errorMsg}`);
+        return {
+          success: false, 
+          message: 'Falha na conexão com AbacatePay. Verifique sua chave da API.',
+        };
+      }
+
+      return {
+        success: true,
+        message: 'Conexão com AbacatePay estabelecida com sucesso!',
+      };
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Error testing AbacatePay connection: ${message}`);
+      return {
+        success: false,
+        message: `Erro ao conectar com AbacatePay: ${message}`,
+      };
+    }
+  }
 }
+

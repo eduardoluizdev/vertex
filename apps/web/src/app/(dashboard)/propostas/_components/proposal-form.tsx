@@ -1,16 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Plus, Trash2, Save, Package, PenLine } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Plus, Trash2, Save, Package, PenLine, ExternalLink, Loader2, CreditCard, Copy, Check, QrCode, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { createProposal, updateProposal } from '../_actions/proposal-actions';
+import { createProposal, updateProposal, getPaymentStatus } from '../_actions/proposal-actions';
 import { format } from 'date-fns';
 
 const STATUS_OPTIONS = [
@@ -29,6 +29,9 @@ interface ProposalItem {
   description: string;
   quantity: number;
   unitPrice: number;
+  // Raw string values for inputs — avoids React controlled number input bug with decimals
+  quantityRaw: string;
+  unitPriceRaw: string;
 }
 
 interface Service {
@@ -63,6 +66,9 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
   );
   const [notes, setNotes] = useState(proposal?.notes ?? '');
 
+  const initialProvider = proposal?.abacatePayId ? 'abacatepay' : proposal?.asaasPaymentId ? 'asaas' : 'none';
+  const [paymentProvider, setPaymentProvider] = useState<string>(initialProvider);
+
   // Initialise items — existing items = custom (free-text), preserving saved data
   const [items, setItems] = useState<ProposalItem[]>(
     proposal?.items?.map((i: any) => ({
@@ -72,22 +78,45 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
       description: i.description ?? '',
       quantity: i.quantity,
       unitPrice: i.unitPrice,
+      quantityRaw: String(i.quantity),
+      unitPriceRaw: String(i.unitPrice),
     })) ?? [],
   );
+
+  const [paymentStatus, setPaymentStatus] = useState<{ status: string; url: string | null; brCode?: string | null; brCodeBase64?: string | null } | null>(null);
+  const [loadingPayment, setLoadingPayment] = useState(false);
+  const [copiedBrCode, setCopiedBrCode] = useState(false);
+
+  const copyBrCode = useCallback((code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedBrCode(true);
+    setTimeout(() => setCopiedBrCode(false), 2000);
+  }, []);
+
+  useEffect(() => {
+    if (proposal?.id && proposal.totalValue > 0) {
+      setLoadingPayment(true);
+      getPaymentStatus(proposal.id)
+        .then(res => {
+          if (res) setPaymentStatus(res);
+        })
+        .finally(() => setLoadingPayment(false));
+    }
+  }, [proposal?.id, proposal?.totalValue]);
 
   // ── Item helpers ──────────────────────────────────────────────────────────
 
   const addCatalogItem = () => {
     setItems((prev) => [
       ...prev,
-      { mode: 'catalog', serviceId: '', name: '', description: '', quantity: 1, unitPrice: 0 },
+      { mode: 'catalog', serviceId: '', name: '', description: '', quantity: 1, unitPrice: 0, quantityRaw: '1', unitPriceRaw: '' },
     ]);
   };
 
   const addCustomItem = () => {
     setItems((prev) => [
       ...prev,
-      { mode: 'custom', name: '', description: '', quantity: 1, unitPrice: 0 },
+      { mode: 'custom', name: '', description: '', quantity: 1, unitPrice: 0, quantityRaw: '1', unitPriceRaw: '' },
     ]);
   };
 
@@ -106,6 +135,7 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
       name: svc.name,
       description: svc.description ?? '',
       unitPrice: svc.price,
+      unitPriceRaw: String(svc.price),
     });
   };
 
@@ -130,6 +160,7 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
         title,
         status,
         customerId,
+        paymentProvider,
         proposalDate: proposalDate || undefined,
         followUpDate: followUpDate || undefined,
         notes: notes || undefined,
@@ -229,6 +260,27 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
             />
           </div>
 
+          <div className="space-y-1.5">
+            <Label>Método de Pagamento</Label>
+            <Select value={paymentProvider} onValueChange={setPaymentProvider} disabled={proposal?.status === 'APPROVED' || proposal?.status === 'REJECTED'}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Nenhum</SelectItem>
+                <SelectItem value="asaas">Asaas</SelectItem>
+                <SelectItem value="abacatepay">AbacatePay</SelectItem>
+              </SelectContent>
+            </Select>
+            {paymentProvider === 'asaas' && (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 mt-1">
+                <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
+                <div className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
+                  <span className="font-semibold">Asaas:</span> valor mínimo de cobrança é <span className="font-semibold">R$ 5,00</span>.
+                  O cliente selecionado precisa ter <span className="font-semibold">e-mail</span> cadastrado.
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="md:col-span-2 space-y-1.5">
             <Label htmlFor="notes">Observações</Label>
             <Textarea
@@ -241,6 +293,110 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
           </div>
         </CardContent>
       </Card>
+
+      {/* ── Payment Info ── */}
+      {proposal?.id && (paymentStatus || loadingPayment) && (
+        <Card className="border-green-500/20 bg-green-500/5">
+          <CardHeader className="pb-3">
+            <div className="flex items-center gap-2">
+              <CreditCard className="size-5 text-green-500" />
+              <CardTitle className="text-base">Pagamento Gerado</CardTitle>
+            </div>
+            <CardDescription>
+              Status e dados de cobrança.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingPayment ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" /> Carregando status...
+              </div>
+            ) : paymentStatus?.status === 'NOT_GENERATED' ? (
+              <p className="text-sm text-muted-foreground">O link de pagamento não foi gerado ou nenhuma integração de pagamentos está configurada no momento da criação.</p>
+            ) : paymentStatus?.status === 'ERROR' ? (
+              <p className="text-sm text-red-500 font-medium">Erro ao carregar o status do pagamento.</p>
+            ) : (
+              <div className="space-y-4">
+                {/* Status Badge */}
+                <div className="flex items-center justify-between gap-4 p-4 border rounded-xl bg-background">
+                  <div>
+                    <div className="text-sm text-muted-foreground mb-1">Status Atual</div>
+                    <div className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
+                      paymentStatus?.status === 'RECEIVED' || paymentStatus?.status === 'CONFIRMED'
+                        ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-500'
+                        : paymentStatus?.status === 'PENDING'
+                        ? 'border-amber-500/20 bg-amber-500/10 text-amber-500'
+                        : paymentStatus?.status === 'EXPIRED'
+                        ? 'border-red-500/20 bg-red-500/10 text-red-500'
+                        : 'border-zinc-500/20 bg-zinc-500/10 text-zinc-500'
+                    }`}>
+                      {paymentStatus?.status === 'RECEIVED' || paymentStatus?.status === 'CONFIRMED' ? '✓ Pago' :
+                       paymentStatus?.status === 'PENDING' ? '⏳ Aguardando Pagamento' :
+                       paymentStatus?.status === 'EXPIRED' ? '✗ Expirado' :
+                       paymentStatus?.status}
+                    </div>
+                  </div>
+                  {paymentStatus?.url && (
+                    <Button variant="outline" size="sm" asChild className="gap-2">
+                      <a href={paymentStatus.url} target="_blank" rel="noopener noreferrer">
+                        Abrir Link <ExternalLink className="size-3.5" />
+                      </a>
+                    </Button>
+                  )}
+                </div>
+
+                {/* AbacatePay PIX QRCode */}
+                {paymentStatus?.brCode && (
+                  <div className="rounded-xl border border-border bg-background p-4 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <QrCode className="size-4 text-emerald-500" />
+                      <span className="text-sm font-semibold">PIX — QR Code {proposal?.asaasPaymentId ? 'Asaas' : 'AbacatePay'}</span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 items-center">
+                      {/* QR Code image */}
+                      {paymentStatus.brCodeBase64 && (
+                        <div className="shrink-0">
+                          <img
+                            src={paymentStatus.brCodeBase64}
+                            alt="QR Code PIX"
+                            className="w-40 h-40 rounded-lg border border-border"
+                          />
+                        </div>
+                      )}
+
+                      {/* Copia-e-cola */}
+                      <div className="flex-1 w-full space-y-2">
+                        <p className="text-xs text-muted-foreground">Código copia e cola (PIX):</p>
+                        <div className="relative">
+                          <textarea
+                            readOnly
+                            value={paymentStatus.brCode}
+                            rows={4}
+                            className="w-full rounded-lg border border-border bg-muted/30 px-3 py-2 font-mono text-xs text-foreground/80 resize-none"
+                          />
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => copyBrCode(paymentStatus.brCode!)}
+                          className="gap-2 w-full"
+                        >
+                          {copiedBrCode
+                            ? <><Check className="size-3.5 text-emerald-400" /> Copiado!</>
+                            : <><Copy className="size-3.5" /> Copiar código PIX</>
+                          }
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* ── Items ── */}
       <Card>
@@ -371,11 +527,15 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
                 <div className="col-span-5 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Qtd.</Label>
                   <Input
-                    type="number"
-                    min={1}
-                    step="any"
-                    value={item.quantity}
-                    onChange={(e) => updateItem(idx, { quantity: Number(e.target.value) })}
+                    type="text"
+                    inputMode="numeric"
+                    value={item.quantityRaw}
+                    onChange={(e) => {
+                      const raw = e.target.value;
+                      if (/^\d*$/.test(raw)) {
+                        updateItem(idx, { quantityRaw: raw, quantity: parseInt(raw) || 0 });
+                      }
+                    }}
                   />
                 </div>
 
@@ -383,11 +543,16 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
                 <div className="col-span-5 md:col-span-2 space-y-1">
                   <Label className="text-xs text-muted-foreground">Val. Unit. (R$)</Label>
                   <Input
-                    type="number"
-                    min={0}
-                    step="0.01"
-                    value={item.unitPrice}
-                    onChange={(e) => updateItem(idx, { unitPrice: Number(e.target.value) })}
+                    type="text"
+                    inputMode="decimal"
+                    value={item.unitPriceRaw}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(',', '.');
+                      if (/^\d*\.?\d*$/.test(raw) || raw === '') {
+                        updateItem(idx, { unitPriceRaw: raw, unitPrice: parseFloat(raw) || 0 });
+                      }
+                    }}
+                    placeholder="0.00"
                   />
                 </div>
 

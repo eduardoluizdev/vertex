@@ -13,6 +13,7 @@ const VARIABLES = [
   { key: '#CLIENTE#', description: 'Nome do cliente' },
   { key: '#VALOR#', description: 'Valor total da proposta' },
   { key: '#LINK#', description: 'Link público da proposta' },
+  { key: '#LINK_PAGAMENTO#', description: 'Link de pagamento Pix (Asaas)' },
   { key: '#EMPRESA#', description: 'Nome da empresa' },
 ];
 

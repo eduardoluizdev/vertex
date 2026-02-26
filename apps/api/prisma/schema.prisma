@@ -247,6 +247,14 @@ model Proposal {
   notes        String?        @db.Text
   publicToken  String         @unique @default(uuid())
   totalValue   Float          @default(0)
+  asaasPaymentUrl        String?
+  asaasPaymentId         String?
+  asaasBrCode            String?  @db.Text
+  asaasBrCodeBase64      String?  @db.Text
+  abacatePayUrl          String?
+  abacatePayId           String?
+  abacatePayBrCode       String?  @db.Text
+  abacatePayBrCodeBase64 String?  @db.Text
 
   customerId   String
   customer     Customer       @relation(fields: [customerId], references: [id])

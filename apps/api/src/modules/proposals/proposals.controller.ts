@@ -88,6 +88,14 @@ export class ProposalsController {
     return this.proposalsService.findOne(companyId, id);
   }
 
+  @Get(':id/payment-status')
+  getPaymentStatus(
+    @Param('companyId') companyId: string,
+    @Param('id') id: string,
+  ) {
+    return this.proposalsService.getPaymentStatus(companyId, id);
+  }
+
   @Patch(':id/status')
   updateStatus(
     @Param('companyId') companyId: string,
