@@ -28,13 +28,12 @@ export class ProposalsService {
     return items.reduce((sum, i) => sum + i.quantity * i.unitPrice, 0);
   }
 
-  private async generateAsaasPixQrCode(
+  private async generateAsaasPaymentLink(
     companyId: string,
     title: string,
     value: number,
     description: string,
-    customerId?: string,
-  ): Promise<{ brCode: string; brCodeBase64: string; id: string; url: string | null } | null> {
+  ): Promise<{ url: string; id: string } | null> {
     const integration = await this.prisma.integrationConfig.findFirst({
       where: { provider: 'asaas', companyId },
     });
@@ -47,112 +46,45 @@ export class ProposalsService {
     const baseUrl = isSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
 
     try {
-      // Step 1: Get or create the customer in Asaas (required for /payments)
-      let asaasCustomerId: string | null = null;
-
-      if (customerId) {
-        const customer = await this.prisma.customer.findUnique({
-          where: { id: customerId },
-        });
-
-        if (customer) {
-          // Try to find existing customer in Asaas by email
-          const findResp = await fetch(
-            `${baseUrl}/customers?email=${encodeURIComponent(customer.email)}`,
-            { headers: { access_token: apiKey } },
-          );
-
-          if (findResp.ok) {
-            const findData = await findResp.json();
-            if (findData.data?.length > 0) {
-              asaasCustomerId = findData.data[0].id;
-            }
-          }
-
-          // Create if not found
-          if (!asaasCustomerId) {
-            const createResp = await fetch(`${baseUrl}/customers`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json', access_token: apiKey },
-              body: JSON.stringify({
-                name: customer.name,
-                email: customer.email,
-                phone: customer.phone ?? undefined,
-                cpfCnpj: customer.document?.replace(/\D/g, '') ?? undefined,
-              }),
-            });
-
-            if (createResp.ok) {
-              const createData = await createResp.json();
-              asaasCustomerId = createData.id;
-            } else {
-              const err = await createResp.json().catch(() => null);
-              this.logger.warn(`Failed to create Asaas customer: ${JSON.stringify(err)}`);
-            }
-          }
-        }
-      }
-
-      if (!asaasCustomerId) {
-        this.logger.warn('No Asaas customer ID — cannot create PIX charge');
-        return null;
-      }
-
-      // Step 2: Create PIX charge
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 10);
-      const dueDateStr = dueDate.toISOString().split('T')[0]; // YYYY-MM-DD
-
-      const chargeResp = await fetch(`${baseUrl}/payments`, {
+      // paymentLinks don't require a customer ID — the customer opens the URL and chooses
+      // billingType UNDEFINED lets them pick: PIX, credit card or boleto
+      const response = await fetch(`${baseUrl}/paymentLinks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', access_token: apiKey },
         body: JSON.stringify({
-          customer: asaasCustomerId,
-          billingType: 'PIX',
+          billingType: 'UNDEFINED',
+          chargeType: 'DETACHED',
+          name: title,
+          description,
           value,
-          dueDate: dueDateStr,
-          description: `${title} — ${description}`,
+          dueDateLimitDays: 10,
         }),
       });
 
-      if (!chargeResp.ok) {
+      if (!response.ok) {
         let errData;
-        try { errData = await chargeResp.json(); } catch {}
-        this.logger.error(`Error creating Asaas PIX charge: ${JSON.stringify(errData)}`);
+        try { errData = await response.json(); } catch {}
+        this.logger.error(`Error creating Asaas payment link: ${JSON.stringify(errData)}`);
         return null;
       }
 
-      const chargeData = await chargeResp.json();
-      const paymentId: string = chargeData.id;
-      const paymentUrl: string | null = chargeData.invoiceUrl ?? null;
-
-      // Step 3: Fetch QR code (encodedImage + payload)
-      const qrResp = await fetch(`${baseUrl}/payments/${paymentId}/pixQrCode`, {
-        method: 'GET',
-        headers: { access_token: apiKey },
-      });
-
-      if (!qrResp.ok) {
-        this.logger.warn(`Could not fetch Asaas PIX QR code for payment ${paymentId}`);
-        return { brCode: '', brCodeBase64: '', id: paymentId, url: paymentUrl };
-      }
-
-      const qrData = await qrResp.json();
-      // Asaas returns: { encodedImage, payload, expirationDate }
-      return {
-        id: paymentId,
-        url: paymentUrl,
-        brCode: qrData.payload ?? '',
-        brCodeBase64: qrData.encodedImage ? `data:image/png;base64,${qrData.encodedImage}` : '',
-      };
+      const data = await response.json();
+      this.logger.log(`Asaas payment link created: id=${data.id} url=${data.url}`);
+      return { url: data.url, id: data.id };
     } catch (err: any) {
-      this.logger.error(`Failed to generate Asaas PIX QRCode: ${err.message}`);
+      this.logger.error(`Failed to generate Asaas payment link: ${err.message}`);
       return null;
     }
   }
 
 
-  private async generateAbacatePayPixQrCode(companyId: string, totalValue: number, description: string): Promise<{ brCode: string; brCodeBase64: string; id: string } | null> {
+
+  private async generateAbacatePayBillingLink(
+    companyId: string,
+    customerId: string,
+    totalValue: number,
+    description: string,
+  ): Promise<{ url: string; id: string } | null> {
     const integration = await this.prisma.integrationConfig.findFirst({
       where: { provider: 'abacatepay', companyId },
     });
@@ -162,43 +94,74 @@ export class ProposalsService {
 
     if (!apiKey) return null;
 
-    const baseUrl = 'https://api.abacatepay.com/v1';
-    const amountInCents = Math.round(totalValue * 100);
+    // Get customer data
+    const customer = await this.prisma.customer.findUnique({
+      where: { id: customerId },
+    });
 
-    this.logger.log(`Generating AbacatePay PIX QRCode: amount=${amountInCents} cents, devMode=${isSandbox}`);
+    if (!customer) {
+      this.logger.error(`Customer not found: ${customerId}`);
+      return null;
+    }
+
+    // Get the proposal web URL for returnUrl/completionUrl
+    const proposalIntegration = await this.prisma.integrationConfig.findFirst({
+      where: { provider: PROPOSAL_PROVIDER, companyId },
+    });
+    const proposalCfg = (proposalIntegration?.config ?? {}) as Record<string, string>;
+    const webUrl = proposalCfg.webUrl || 'https://app.vertexhub.com.br';
+
+    const baseUrl = 'https://api.abacatepay.com/v1';
+    const priceInCents = Math.round(totalValue * 100);
+
+    this.logger.log(`Creating AbacatePay billing link: amount=${priceInCents} cents, devMode=${isSandbox}`);
 
     try {
-      const response = await fetch(`${baseUrl}/pixQrCode/create`, {
+      const response = await fetch(`${baseUrl}/billing/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          amount: amountInCents,
-          expiresIn: 86400, // 24 hours in seconds
-          description,
+          frequency: 'ONE_TIME',
+          methods: ['PIX', 'CARD'],
           devMode: isSandbox,
+          products: [{
+            externalId: `proposal-${Date.now()}`,
+            name: description,
+            quantity: 1,
+            price: priceInCents,
+          }],
+          returnUrl: `${webUrl}/propostas`,
+          completionUrl: `${webUrl}/propostas`,
+          customer: {
+            email: customer.email,
+            name: customer.name,
+            ...(customer.phone && { cellphone: customer.phone }),
+            ...(customer.document && { taxId: customer.document }),
+          },
         }),
       });
 
       if (!response.ok) {
         let errData;
         try { errData = await response.json(); } catch {}
-        this.logger.error(`Error generating AbacatePay PIX QRCode: ${JSON.stringify(errData)}`);
+        this.logger.error(`Error creating AbacatePay billing link: ${JSON.stringify(errData)}`);
         return null;
       }
 
-      const jsonData = await response.json();
-      const data = jsonData.data;
-      if (!data?.brCode || !data?.id) {
-        this.logger.error(`AbacatePay PIX QRCode response missing brCode or id: ${JSON.stringify(jsonData)}`);
+      const json = await response.json();
+      const data = json.data;
+      if (!data?.url || !data?.id) {
+        this.logger.error(`AbacatePay billing response missing url or id: ${JSON.stringify(json)}`);
         return null;
       }
 
-      return { brCode: data.brCode, brCodeBase64: data.brCodeBase64 ?? '', id: data.id };
+      this.logger.log(`AbacatePay billing link created: id=${data.id} url=${data.url}`);
+      return { url: data.url, id: data.id };
     } catch (err: any) {
-      this.logger.error(`Failed to generate AbacatePay PIX QRCode: ${err.message}`);
+      this.logger.error(`Failed to create AbacatePay billing link: ${err.message}`);
       return null;
     }
   }
@@ -218,29 +181,26 @@ export class ProposalsService {
 
     if (totalValue > 0 && dto.paymentProvider && dto.paymentProvider !== 'none') {
       if (dto.paymentProvider === 'asaas') {
-        const asaasResult = await this.generateAsaasPixQrCode(
+        const asaasResult = await this.generateAsaasPaymentLink(
           companyId,
           `Proposta #${number} - ${dto.title}`,
           totalValue,
           `Pagamento da proposta #${number}`,
-          dto.customerId,
         );
         if (asaasResult) {
           asaasPaymentId = asaasResult.id;
           asaasPaymentUrl = asaasResult.url;
-          asaasBrCode = asaasResult.brCode || null;
-          asaasBrCodeBase64 = asaasResult.brCodeBase64 || null;
         }
       } else if (dto.paymentProvider === 'abacatepay') {
-        const pixResult = await this.generateAbacatePayPixQrCode(
+        const billingResult = await this.generateAbacatePayBillingLink(
           companyId,
+          dto.customerId,
           totalValue,
           `Proposta #${number} - ${dto.title}`
         );
-        if (pixResult) {
-          abacatePayId = pixResult.id;
-          abacatePayBrCode = pixResult.brCode;
-          abacatePayBrCodeBase64 = pixResult.brCodeBase64;
+        if (billingResult) {
+          abacatePayId = billingResult.id;
+          abacatePayUrl = billingResult.url;
         }
       }
     }
@@ -377,29 +337,26 @@ export class ProposalsService {
 
       if (targetValue > 0 && targetProvider !== 'none') {
         if (targetProvider === 'asaas') {
-          const asaasResult = await this.generateAsaasPixQrCode(
+          const asaasResult = await this.generateAsaasPaymentLink(
             companyId,
             `Proposta #${proposal.number} - ${dto.title || proposal.title}`,
             targetValue,
             `Pagamento da proposta #${proposal.number}`,
-            dto.customerId || proposal.customerId,
           );
           if (asaasResult) {
             asaasPaymentId = asaasResult.id;
             asaasPaymentUrl = asaasResult.url;
-            asaasBrCode = asaasResult.brCode || null;
-            asaasBrCodeBase64 = asaasResult.brCodeBase64 || null;
           }
         } else if (targetProvider === 'abacatepay') {
-          const pixResult = await this.generateAbacatePayPixQrCode(
+          const billingResult = await this.generateAbacatePayBillingLink(
             companyId,
+            dto.customerId || proposal.customerId,
             targetValue,
             `Proposta #${proposal.number} - ${dto.title || proposal.title}`
           );
-          if (pixResult) {
-            abacatePayId = pixResult.id;
-            abacatePayBrCode = pixResult.brCode;
-            abacatePayBrCodeBase64 = pixResult.brCodeBase64;
+          if (billingResult) {
+            abacatePayId = billingResult.id;
+            abacatePayUrl = billingResult.url;
           }
         }
       }
@@ -477,43 +434,40 @@ export class ProposalsService {
       const cfg = (integration?.config as any) ?? {};
       const apiKey = cfg?.apiKey;
 
-      const brCode = (proposal as any).abacatePayBrCode ?? null;
-      const brCodeBase64 = (proposal as any).abacatePayBrCodeBase64 ?? null;
-
       if (!apiKey) {
-        return { status: 'NOT_GENERATED', url: null, brCode, brCodeBase64 };
+        return { status: 'NOT_GENERATED', url: proposal.abacatePayUrl };
       }
 
       const baseUrl = 'https://api.abacatepay.com/v1';
 
       try {
-        // Use the dedicated /pixQrCode/check?id= endpoint (returns { status, expiresAt })
-        const response = await fetch(
-          `${baseUrl}/pixQrCode/check?id=${encodeURIComponent(proposal.abacatePayId)}`,
-          {
-            method: 'GET',
-            headers: { 'Authorization': `Bearer ${apiKey}` },
-          },
-        );
+        // abacatePayId now stores a billing ID — look it up in /billing/list
+        const response = await fetch(`${baseUrl}/billing/list`, {
+          method: 'GET',
+          headers: { 'Authorization': `Bearer ${apiKey}` },
+        });
 
         if (!response.ok) {
-          this.logger.warn(`AbacatePay check status HTTP ${response.status} for id=${proposal.abacatePayId}`);
-          return { status: 'ERROR', url: null, brCode, brCodeBase64 };
+          this.logger.warn(`AbacatePay billing list HTTP ${response.status}`);
+          return { status: 'ERROR', url: proposal.abacatePayUrl };
         }
 
         const json = await response.json();
-        const rawStatus: string = json.data?.status ?? 'PENDING';
+        const billings: any[] = json.data ?? [];
+        const billing = billings.find((b: any) => b.id === proposal.abacatePayId);
 
-        // AbacatePay statuses: PENDING | PAID | EXPIRED | CANCELLED | REFUNDED
-        // Map PAID → RECEIVED for consistency with Asaas / frontend expectations
+        // AbacatePay billing statuses: PENDING, PAID, CANCELLED, EXPIRED
+        const rawStatus: string = billing?.status ?? 'PENDING';
+        // Map PAID → RECEIVED for frontend consistency
         const mappedStatus = rawStatus === 'PAID' ? 'RECEIVED' : rawStatus;
 
-        return { status: mappedStatus, url: null, brCode, brCodeBase64 };
+        return { status: mappedStatus, url: proposal.abacatePayUrl };
       } catch (err: any) {
-        this.logger.error(`Failed to fetch AbacatePay PIX QRCode status: ${err.message}`);
-        return { status: 'ERROR', url: null, brCode, brCodeBase64 };
+        this.logger.error(`Failed to fetch AbacatePay billing status: ${err.message}`);
+        return { status: 'ERROR', url: proposal.abacatePayUrl };
       }
     }
+
 
 
     if (proposal.asaasPaymentId) {
@@ -524,35 +478,42 @@ export class ProposalsService {
       const apiKey = cfg?.apiKey;
       const isSandbox = cfg?.isSandbox ?? false;
 
-      const brCode = (proposal as any).asaasBrCode as string | null ?? null;
-      const brCodeBase64 = (proposal as any).asaasBrCodeBase64 as string | null ?? null;
-
       if (!apiKey) {
-        return { status: 'NOT_GENERATED', url: proposal.asaasPaymentUrl, brCode, brCodeBase64 };
+        return { status: 'NOT_GENERATED', url: proposal.asaasPaymentUrl };
       }
 
       const baseUrl = isSandbox ? 'https://sandbox.asaas.com/api/v3' : 'https://api.asaas.com/v3';
 
       try {
-        // Fetch the specific payment status by ID
-        const response = await fetch(`${baseUrl}/payments/${proposal.asaasPaymentId}`, {
-          method: 'GET',
-          headers: { access_token: apiKey },
-        });
+        // asaasPaymentId now stores a paymentLink ID — list payments associated with it
+        const response = await fetch(
+          `${baseUrl}/payments?paymentLink=${encodeURIComponent(proposal.asaasPaymentId)}`,
+          { method: 'GET', headers: { access_token: apiKey } },
+        );
 
         if (!response.ok) {
-          this.logger.warn(`Asaas payment status HTTP ${response.status} for id=${proposal.asaasPaymentId}`);
-          return { status: 'ERROR', url: proposal.asaasPaymentUrl, brCode, brCodeBase64 };
+          this.logger.warn(`Asaas payment list HTTP ${response.status} for link=${proposal.asaasPaymentId}`);
+          return { status: 'ERROR', url: proposal.asaasPaymentUrl };
         }
 
         const data = await response.json();
-        // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, REFUND_REQUESTED, CHARGEBACK_REQUESTED, CHARGEBACK_DISPUTE, AWAITING_CHARGEBACK_REVERSAL, DUNNING_REQUESTED, DUNNING_RECEIVED, AWAITING_RISK_ANALYSIS
-        return { status: data.status ?? 'PENDING', url: proposal.asaasPaymentUrl, brCode, brCodeBase64 };
+        const payments: any[] = data.data ?? [];
+
+        if (payments.length === 0) {
+          // No payment made yet through this link
+          return { status: 'PENDING', url: proposal.asaasPaymentUrl };
+        }
+
+        // Use the most recent payment status
+        const latest = payments[0];
+        // Asaas statuses: PENDING, RECEIVED, CONFIRMED, OVERDUE, REFUNDED, ...
+        return { status: latest.status ?? 'PENDING', url: proposal.asaasPaymentUrl };
       } catch (err: any) {
         this.logger.error(`Failed to fetch Asaas payment status: ${err.message}`);
-        return { status: 'ERROR', url: proposal.asaasPaymentUrl, brCode, brCodeBase64 };
+        return { status: 'ERROR', url: proposal.asaasPaymentUrl };
       }
     }
+
 
     return { status: 'NOT_GENERATED', url: null };
   }

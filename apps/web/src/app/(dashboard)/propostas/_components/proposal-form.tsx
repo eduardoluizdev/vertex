@@ -274,8 +274,15 @@ export function ProposalForm({ proposal, customers, services }: ProposalFormProp
               <div className="flex items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 mt-1">
                 <AlertTriangle className="size-4 text-amber-500 mt-0.5 shrink-0" />
                 <div className="text-xs text-amber-600 dark:text-amber-400 leading-relaxed">
-                  <span className="font-semibold">Asaas:</span> valor mínimo de cobrança é <span className="font-semibold">R$ 5,00</span>.
-                  O cliente selecionado precisa ter <span className="font-semibold">e-mail</span> cadastrado.
+                  <span className="font-semibold">Asaas:</span> será gerado um link onde o cliente escolhe entre <span className="font-semibold">PIX, cartão ou boleto</span>. Valor mínimo: <span className="font-semibold">R$ 5,00</span>.
+                </div>
+              </div>
+            )}
+            {paymentProvider === 'abacatepay' && (
+              <div className="flex items-start gap-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2.5 mt-1">
+                <AlertTriangle className="size-4 text-emerald-500 mt-0.5 shrink-0" />
+                <div className="text-xs text-emerald-600 dark:text-emerald-400 leading-relaxed">
+                  <span className="font-semibold">AbacatePay:</span> será gerado um link onde o cliente escolhe entre <span className="font-semibold">PIX ou cartão</span>. <span className="text-emerald-500/70">(Cartão em beta)</span>
                 </div>
               </div>
             )}
