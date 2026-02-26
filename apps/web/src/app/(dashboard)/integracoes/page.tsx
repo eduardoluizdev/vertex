@@ -49,8 +49,8 @@ export default async function IntegracoesPage() {
       {/* Page Header */}
       <div>
         <div className="flex items-center gap-4 mb-3">
-          <div className="flex size-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-blue-500/20 border border-violet-500/20 shadow-inner">
-            <Plug2 className="size-6 text-violet-500 dark:text-violet-400" />
+          <div className="flex size-14 items-center justify-center rounded-2xl bg-vibe-surface border border-vibe-primary/20 shadow-inner">
+            <Plug2 className="size-6 text-vibe-primary" />
           </div>
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">
@@ -69,8 +69,8 @@ export default async function IntegracoesPage() {
         <section className="space-y-6">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800">
-                <Mail className="size-4 text-slate-600 dark:text-slate-400" />
+              <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                <Mail className="size-4 text-vibe-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
                 Email (Global Admin)
@@ -97,8 +97,8 @@ export default async function IntegracoesPage() {
         <section className="space-y-6">
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-950/30">
-                <MessageSquare className="size-4 text-blue-600 dark:text-blue-400" />
+              <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                <MessageSquare className="size-4 text-vibe-primary" />
               </div>
               <h2 className="text-lg font-semibold text-foreground">
                 Comunicação (Empresa)

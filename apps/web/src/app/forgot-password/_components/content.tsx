@@ -65,7 +65,7 @@ export function ForgotPasswordContent() {
           {/* Logo e Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-vibe-primary mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">Recuperar Senha</h1>
@@ -90,7 +90,7 @@ export function ForgotPasswordContent() {
               </div>
               <Link href="/login" className="mt-2 w-full">
                 <Button
-                  className="w-full h-12 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                  className="w-full h-12 bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0"
                 >
                   Voltar ao login
                 </Button>
@@ -100,8 +100,8 @@ export function ForgotPasswordContent() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Ícone do email */}
               <div className="flex justify-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20">
-                  <Mail className="w-6 h-6 text-violet-400" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-vibe-surface border border-vibe-primary/20">
+                  <Mail className="w-6 h-6 text-vibe-primary" />
                 </div>
               </div>
 
@@ -126,7 +126,7 @@ export function ForgotPasswordContent() {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={status === 'loading'}
-                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20"
                 />
               </div>
 
@@ -135,7 +135,7 @@ export function ForgotPasswordContent() {
                 id="forgot-password-submit"
                 type="submit"
                 disabled={status === 'loading'}
-                className="h-12 w-full text-base font-semibold bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                className="h-12 w-full text-base font-semibold bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0"
               >
                 {status === 'loading' ? (
                   <span className="flex items-center gap-2">
@@ -152,7 +152,7 @@ export function ForgotPasswordContent() {
                 Lembrou a senha?{' '}
                 <Link
                   href="/login"
-                  className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                  className="font-medium text-vibe-primary hover:text-vibe-primary/80 transition-colors"
                 >
                   Fazer login
                 </Link>

@@ -87,7 +87,7 @@ export function RegisterContent() {
           {/* Logo and Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-vibe-primary mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">
@@ -118,7 +118,7 @@ export function RegisterContent() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20"
               />
             </div>
 
@@ -132,7 +132,7 @@ export function RegisterContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20"
               />
             </div>
 
@@ -148,7 +148,7 @@ export function RegisterContent() {
                   required
                   minLength={8}
                   disabled={isLoading}
-                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20 pr-12"
                 />
                 <button
                   type="button"
@@ -173,7 +173,7 @@ export function RegisterContent() {
                   required
                   minLength={8}
                   disabled={isLoading}
-                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20 pr-12"
                 />
                 <button
                   type="button"
@@ -188,7 +188,7 @@ export function RegisterContent() {
 
             <Button
               type="submit"
-              className="h-12 w-full text-base font-semibold bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 mt-6"
+              className="h-12 w-full text-base font-semibold bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0 mt-6"
               disabled={isLoading}
             >
               {isLoading ? 'Criando conta...' : 'Criar conta'}
@@ -200,7 +200,7 @@ export function RegisterContent() {
             Já tem uma conta?{' '}
             <Link
               href="/login"
-              className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+              className="font-medium text-vibe-primary hover:text-vibe-primary/80 transition-colors"
             >
               Fazer login
             </Link>

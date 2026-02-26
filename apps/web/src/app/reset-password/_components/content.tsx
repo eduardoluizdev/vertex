@@ -170,7 +170,7 @@ export function ResetPasswordContent() {
           {/* Logo e Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-vibe-primary mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">Nova Senha</h1>
@@ -183,7 +183,7 @@ export function ResetPasswordContent() {
           {/* Estado: Verificando token */}
           {tokenStatus === 'checking' && (
             <div className="flex flex-col items-center gap-4 py-8">
-              <Loader2 className="w-10 h-10 text-violet-400 animate-spin" />
+              <Loader2 className="w-10 h-10 text-vibe-primary animate-spin" />
               <p className="text-gray-400 text-sm">Verificando seu link...</p>
             </div>
           )}
@@ -201,7 +201,7 @@ export function ResetPasswordContent() {
                 </p>
               </div>
               <Link href="/forgot-password" className="w-full mt-2">
-                <Button className="w-full h-12 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
+                <Button className="w-full h-12 bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0">
                   Solicitar novo link
                 </Button>
               </Link>
@@ -222,7 +222,7 @@ export function ResetPasswordContent() {
               </div>
               <Button
                 onClick={() => router.push('/login')}
-                className="w-full h-12 mt-2 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                className="w-full h-12 mt-2 bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0"
               >
                 Ir para o login
               </Button>
@@ -234,8 +234,8 @@ export function ResetPasswordContent() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {/* Ícone de segurança */}
               <div className="flex justify-center">
-                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-violet-500/10 border border-violet-500/20">
-                  <ShieldCheck className="w-6 h-6 text-violet-400" />
+                <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-vibe-surface border border-vibe-primary/20">
+                  <ShieldCheck className="w-6 h-6 text-vibe-primary" />
                 </div>
               </div>
 
@@ -270,7 +270,7 @@ export function ResetPasswordContent() {
                     required
                     minLength={8}
                     disabled={submitStatus === 'loading'}
-                    className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
+                    className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20 pr-12"
                   />
                   <button
                     type="button"
@@ -299,7 +299,7 @@ export function ResetPasswordContent() {
                     required
                     minLength={8}
                     disabled={submitStatus === 'loading'}
-                    className={`h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12 ${
+                    className={`h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20 pr-12 ${
                       confirmPassword && password !== confirmPassword
                         ? 'border-red-500/50'
                         : confirmPassword && password === confirmPassword
@@ -343,7 +343,7 @@ export function ResetPasswordContent() {
                 id="reset-password-submit"
                 type="submit"
                 disabled={submitStatus === 'loading'}
-                className="h-12 w-full text-base font-semibold bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+                className="h-12 w-full text-base font-semibold bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0"
               >
                 {submitStatus === 'loading' ? (
                   <span className="flex items-center gap-2">

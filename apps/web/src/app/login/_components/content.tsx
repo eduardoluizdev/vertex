@@ -67,7 +67,7 @@ export function LoginContent() {
           {/* Logo and Header */}
           <div className="text-center space-y-4">
             <div className="inline-block">
-              <VertexHubLogo className="w-16 h-16 text-violet-400 mx-auto" />
+              <VertexHubLogo className="w-16 h-16 text-vibe-primary mx-auto" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-white">
@@ -98,7 +98,7 @@ export function LoginContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={isLoading}
-                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20"
+                className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20"
               />
             </div>
 
@@ -114,7 +114,7 @@ export function LoginContent() {
                   required
                   minLength={8}
                   disabled={isLoading}
-                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-violet-500 focus:ring-violet-500/20 pr-12"
+                  className="h-12 bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-vibe-primary focus:ring-vibe-primary/20 pr-12"
                 />
                 <button
                   type="button"
@@ -139,7 +139,7 @@ export function LoginContent() {
               </div>
               <Link
                 href="/forgot-password"
-                className="text-sm font-medium text-violet-400 hover:text-violet-300 transition-colors"
+                className="text-sm font-medium text-vibe-primary hover:text-vibe-primary/80 transition-colors"
               >
                 Esqueceu a senha?
               </Link>
@@ -147,7 +147,7 @@ export function LoginContent() {
 
             <Button
               type="submit"
-              className="h-12 w-full text-base font-semibold bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
+              className="h-12 w-full text-base font-semibold bg-vibe-primary hover:bg-vibe-primary/90 text-vibe-bg border-0"
               disabled={isLoading}
             >
               {isLoading ? 'Entrando...' : 'Entrar'}
@@ -159,7 +159,7 @@ export function LoginContent() {
             Não tem uma conta?{' '}
             <Link
               href="/register"
-              className="font-medium text-violet-400 hover:text-violet-300 transition-colors"
+              className="font-medium text-vibe-primary hover:text-vibe-primary/80 transition-colors"
             >
               Criar conta
             </Link>
