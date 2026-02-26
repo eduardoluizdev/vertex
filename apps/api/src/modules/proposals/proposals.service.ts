@@ -205,7 +205,7 @@ export class ProposalsService {
       }
     }
 
-    return this.prisma.proposal.create({
+    const createdProposal = await this.prisma.proposal.create({
       data: {
         number,
         title: dto.title,
@@ -236,6 +236,14 @@ export class ProposalsService {
       },
       include: { items: true, customer: true },
     });
+
+    try {
+      await this.sendWhatsapp(companyId, createdProposal.id);
+    } catch (error: any) {
+      this.logger.error(`Erro ao enviar WhatsApp de criação: ${error.message}`);
+    }
+
+    return createdProposal;
   }
 
   async findAll(
@@ -362,7 +370,7 @@ export class ProposalsService {
       }
     }
 
-    return this.prisma.proposal.update({
+    const updatedProposal = await this.prisma.proposal.update({
       where: { id },
       data: {
         ...(dto.title && { title: dto.title }),
@@ -397,14 +405,34 @@ export class ProposalsService {
       },
       include: { items: true, customer: true },
     });
+
+    if (dto.status === 'APPROVED') {
+    try {
+      await this.sendApprovedWhatsapp(companyId, id);
+    } catch (error: any) {
+      this.logger.error(`Erro ao enviar WhatsApp de aprovação: ${error.message}`);
+    }
+  }
+
+    return updatedProposal;
   }
 
   async updateStatus(companyId: string, id: string, status: string) {
     const proposal = await this.findOne(companyId, id);
-    return this.prisma.proposal.update({
+    const updatedProposal = await this.prisma.proposal.update({
       where: { id },
       data: { status: status as any },
     });
+
+    if (status === 'APPROVED' && proposal.status !== 'APPROVED') {
+      try {
+        await this.sendApprovedWhatsapp(companyId, id);
+      } catch (error: any) {
+        this.logger.error(`Erro ao enviar WhatsApp de aprovação: ${error.message}`);
+      }
+    }
+
+    return updatedProposal;
   }
 
   async updateStatusByToken(token: string, status: string) {
@@ -412,10 +440,23 @@ export class ProposalsService {
     if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
       throw new BadRequestException('Esta proposta já foi aprovada ou reprovada.');
     }
-    return this.prisma.proposal.update({
+
+    const updatedProposal = await this.prisma.proposal.update({
       where: { id: proposal.id },
       data: { status: status as any },
     });
+
+    // Se a proposta foi aprovada, enviar WhatsApp com dados de pagamento
+    if (status === 'APPROVED') {
+      try {
+        await this.sendApprovedWhatsapp(proposal.companyId, proposal.id);
+      } catch (error: any) {
+        this.logger.error(`Erro ao enviar WhatsApp de aprovação: ${error.message}`);
+        // Não falha a atualização se o WhatsApp falhar
+      }
+    }
+
+    return updatedProposal;
   }
 
   async getPaymentStatus(companyId: string, id: string): Promise<{ status: string, url: string | null, brCode?: string | null, brCodeBase64?: string | null }> {
@@ -441,25 +482,65 @@ export class ProposalsService {
       const baseUrl = 'https://api.abacatepay.com/v1';
 
       try {
-        // abacatePayId now stores a billing ID — look it up in /billing/list
+        // Fetch the billing list to get the current status
         const response = await fetch(`${baseUrl}/billing/list`, {
           method: 'GET',
           headers: { 'Authorization': `Bearer ${apiKey}` },
         });
 
+        console.log(response);
+
         if (!response.ok) {
           this.logger.warn(`AbacatePay billing list HTTP ${response.status}`);
+          const errorText = await response.text();
+          this.logger.warn(`AbacatePay error response: ${errorText}`);
           return { status: 'ERROR', url: proposal.abacatePayUrl };
         }
 
         const json = await response.json();
+        this.logger.log(`AbacatePay full response: ${JSON.stringify(json)}`);
+
+        // The response should have a 'data' array with billings
         const billings: any[] = json.data ?? [];
+
+        this.logger.log(`AbacatePay billings total: ${billings.length}, looking for: ${proposal.abacatePayId}`);
+
+        // Find the billing by ID
         const billing = billings.find((b: any) => b.id === proposal.abacatePayId);
 
-        // AbacatePay billing statuses: PENDING, PAID, CANCELLED, EXPIRED
-        const rawStatus: string = billing?.status ?? 'PENDING';
-        // Map PAID → RECEIVED for frontend consistency
-        const mappedStatus = rawStatus === 'PAID' ? 'RECEIVED' : rawStatus;
+        if (!billing) {
+          this.logger.warn(`AbacatePay billing not found: ${proposal.abacatePayId}. Available billing IDs: ${billings.map(b => b.id).join(', ')}`);
+          return { status: 'PENDING', url: proposal.abacatePayUrl };
+        }
+
+        this.logger.log(`AbacatePay billing found: ${JSON.stringify(billing)}`);
+
+        // Check if billing is paid by comparing paidAmount with amount
+        const amount = billing.amount ?? 0;
+        const paidAmount = billing.paidAmount ?? 0;
+        const rawStatus: string = billing.status ?? 'PENDING';
+
+        this.logger.log(`AbacatePay billing - amount: ${amount}, paidAmount: ${paidAmount}, status: ${rawStatus}`);
+
+        // Determine the actual payment status
+        let mappedStatus: string;
+        if (paidAmount > 0 && paidAmount >= amount) {
+          // Billing is fully paid
+          mappedStatus = 'RECEIVED';
+          this.logger.log(`Billing is PAID (paidAmount >= amount)`);
+        } else if (paidAmount > 0 && paidAmount < amount) {
+          // Partial payment
+          mappedStatus = 'PENDING';
+          this.logger.log(`Billing is PARTIALLY PAID (paidAmount < amount)`);
+        } else if (rawStatus === 'PAID') {
+          // Fallback to status field
+          mappedStatus = 'RECEIVED';
+        } else {
+          // No payment yet
+          mappedStatus = rawStatus;
+        }
+
+        this.logger.log(`Final mapped status: ${mappedStatus}`);
 
         return { status: mappedStatus, url: proposal.abacatePayUrl };
       } catch (err: any) {
@@ -525,8 +606,8 @@ export class ProposalsService {
 
   async sendWhatsapp(companyId: string, id: string, isFollowUp: boolean = false) {
     const proposal = await this.findOne(companyId, id);
-    
-    // Para follow-up, permite se o status estiver SENT, DRAFT, etc. 
+
+    // Para follow-up, permite se o status estiver SENT, DRAFT, etc.
     // Se quiser bloquear follow-up em APPROVED/REJECTED, a regra é igual.
     if (proposal.status === 'APPROVED' || proposal.status === 'REJECTED') {
       throw new BadRequestException('Não é possível reenviar mensagem para uma proposta já aprovada ou reprovada.');
@@ -588,23 +669,77 @@ export class ProposalsService {
     return { ok: true };
   }
 
+  async sendApprovedWhatsapp(companyId: string, id: string) {
+    this.logger.log(`[sendApprovedWhatsapp] Iniciando envio para proposalId: ${id}, companyId: ${companyId}`);
+    const proposal = await this.findOne(companyId, id);
+
+    if (!proposal.customer.phone) {
+      this.logger.error(`[sendApprovedWhatsapp] Cliente ${proposal.customer.id} sem número de telefone`);
+      throw new Error('Cliente sem número de telefone');
+    }
+
+    const tplRecord = await this.prisma.proposalWhatsappTemplate.findUnique({
+      where: { companyId },
+    });
+
+    const template = tplRecord?.approvedTemplate ||
+      'Olá #CLIENTE#! 🎉\n\nSua proposta nº #PROPOSTA# foi aprovada!\n\n💰 Valor: R$ #VALOR#\n\n📋 Dados para pagamento:\n#LINK_PAGAMENTO#\n\nObrigado pela confiança!\n#EMPRESA#';
+
+    const integration = await this.prisma.integrationConfig.findFirst({
+      where: { provider: PROPOSAL_PROVIDER, companyId },
+    });
+    const cfg = (integration?.config ?? {}) as Record<string, string>;
+    const webUrl = cfg.webUrl;
+
+    const publicLink = webUrl ? `${webUrl}/p/${proposal.publicToken}` : '';
+    const paymentLink = proposal.abacatePayUrl || proposal.asaasPaymentUrl || 'Entre em contato para obter o link de pagamento';
+
+    const message = template
+      .replace(/#PROPOSTA#/g, String(proposal.number))
+      .replace(/#CLIENTE#/g, proposal.customer.name)
+      .replace(/#VALOR#/g, proposal.totalValue.toFixed(2))
+      .replace(/#LINK#/g, publicLink)
+      .replace(/#LINK_PAGAMENTO#/g, paymentLink)
+      .replace(/#EMPRESA#/g, proposal.company?.name || '');
+
+    const rawPhone = proposal.customer.phone.replace(/\D/g, '');
+    const phone =
+      rawPhone.length === 10 || rawPhone.length === 11
+        ? `55${rawPhone}`
+        : rawPhone;
+
+    this.logger.log(`[sendApprovedWhatsapp] Mensagem montada para o telefone ${phone}:\n${message}`);
+
+    try {
+      await this.whatsappService.sendMessage(companyId, phone, message);
+      this.logger.log(`[sendApprovedWhatsapp] Mensagem enviada com sucesso para ${phone}`);
+    } catch (err: any) {
+      this.logger.error(`[sendApprovedWhatsapp] Falha ao enviar para ${phone}: ${err.message}`, err.stack);
+      throw err;
+    }
+
+    return { ok: true };
+  }
+
   async getWhatsappTemplate(companyId: string) {
     return this.prisma.proposalWhatsappTemplate.findUnique({
       where: { companyId },
     });
   }
 
-  async upsertWhatsappTemplate(companyId: string, template: string, followUpTemplate?: string) {
+  async upsertWhatsappTemplate(companyId: string, template: string, followUpTemplate?: string, approvedTemplate?: string) {
     return this.prisma.proposalWhatsappTemplate.upsert({
       where: { companyId },
-      update: { 
+      update: {
         template,
         ...(followUpTemplate !== undefined && { followUpTemplate }),
+        ...(approvedTemplate !== undefined && { approvedTemplate }),
       },
-      create: { 
-        companyId, 
+      create: {
+        companyId,
         template,
         ...(followUpTemplate !== undefined && { followUpTemplate }),
+        ...(approvedTemplate !== undefined && { approvedTemplate }),
       },
     });
   }

@@ -12,7 +12,8 @@
       "Bash(npx shadcn@latest add:*)",
       "Bash(npx tsc:*)",
       "Bash(npx prisma migrate dev:*)",
-      "Bash(del:*)"
+      "Bash(del:*)",
+      "Bash(npx prisma db push)"
     ]
   }
 }

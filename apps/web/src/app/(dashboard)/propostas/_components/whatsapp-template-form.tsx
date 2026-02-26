@@ -20,9 +20,10 @@ const VARIABLES = [
 interface WhatsappTemplateFormProps {
   initialTemplate?: string;
   initialFollowUpTemplate?: string;
+  initialApprovedTemplate?: string;
 }
 
-export function WhatsappTemplateForm({ initialTemplate, initialFollowUpTemplate }: WhatsappTemplateFormProps) {
+export function WhatsappTemplateForm({ initialTemplate, initialFollowUpTemplate, initialApprovedTemplate }: WhatsappTemplateFormProps) {
   const [template, setTemplate] = useState(
     initialTemplate ??
       'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#',
@@ -31,21 +32,27 @@ export function WhatsappTemplateForm({ initialTemplate, initialFollowUpTemplate 
     initialFollowUpTemplate ??
       'Olá #CLIENTE#, tudo bem? Gostaria de saber se conseguiu avaliar nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Qualquer dúvida estou à disposição!',
   );
-  const [activeField, setActiveField] = useState<'template' | 'followUp'>('template');
+  const [approvedTemplate, setApprovedTemplate] = useState(
+    initialApprovedTemplate ??
+      'Olá #CLIENTE#! 🎉\n\nSua proposta nº #PROPOSTA# foi aprovada!\n\n💰 Valor: R$ #VALOR#\n\n📋 Dados para pagamento:\n#LINK_PAGAMENTO#\n\nObrigado pela confiança!\n#EMPRESA#',
+  );
+  const [activeField, setActiveField] = useState<'template' | 'followUp' | 'approved'>('template');
   const [isPending, startTransition] = useTransition();
 
   const insertVariable = (variable: string) => {
     if (activeField === 'template') {
       setTemplate((prev) => prev + variable);
-    } else {
+    } else if (activeField === 'followUp') {
       setFollowUpTemplate((prev) => prev + variable);
+    } else {
+      setApprovedTemplate((prev) => prev + variable);
     }
   };
 
   const handleSave = () => {
     startTransition(async () => {
       try {
-        await saveWhatsappTemplate(template, followUpTemplate);
+        await saveWhatsappTemplate(template, followUpTemplate, approvedTemplate);
         toast.success('Templates salvos com sucesso!');
       } catch {
         toast.error('Erro ao salvar templates');
@@ -93,6 +100,21 @@ export function WhatsappTemplateForm({ initialTemplate, initialFollowUpTemplate 
           rows={20}
           placeholder="Digite a mensagem de follow-up..."
           className={`font-mono text-sm ${activeField === 'followUp' ? 'border-primary' : ''}`}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Mensagem de Aprovação (Automática)</label>
+        <p className="text-xs text-muted-foreground">
+          Esta mensagem será enviada automaticamente quando o cliente aprovar a proposta.
+        </p>
+        <Textarea
+          value={approvedTemplate}
+          onChange={(e) => setApprovedTemplate(e.target.value)}
+          onFocus={() => setActiveField('approved')}
+          rows={20}
+          placeholder="Digite a mensagem de aprovação..."
+          className={`font-mono text-sm ${activeField === 'approved' ? 'border-primary' : ''}`}
         />
       </div>
 

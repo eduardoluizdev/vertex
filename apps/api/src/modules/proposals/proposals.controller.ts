@@ -61,9 +61,10 @@ export class ProposalsController {
     @Body() body: any,
   ) {
     return this.proposalsService.upsertWhatsappTemplate(
-      companyId, 
-      body.template, 
-      body.followUpTemplate
+      companyId,
+      body.template,
+      body.followUpTemplate,
+      body.approvedTemplate
     );
   }
 
