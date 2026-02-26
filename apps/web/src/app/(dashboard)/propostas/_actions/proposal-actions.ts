@@ -207,7 +207,7 @@ export async function getWhatsappTemplate() {
   return res.json();
 }
 
-export async function saveWhatsappTemplate(template: string, followUpTemplate?: string) {
+export async function saveWhatsappTemplate(template: string, followUpTemplate?: string, approvedTemplate?: string) {
   const companyId = await getSelectedCompanyId();
   if (!companyId) throw new Error('Empresa não selecionada');
 
@@ -215,7 +215,7 @@ export async function saveWhatsappTemplate(template: string, followUpTemplate?: 
     `/v1/companies/${companyId}/proposals/whatsapp-template`,
     {
       method: 'PUT',
-      body: JSON.stringify({ template, followUpTemplate }),
+      body: JSON.stringify({ template, followUpTemplate, approvedTemplate }),
     },
   );
 
