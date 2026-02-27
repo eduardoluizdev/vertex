@@ -68,6 +68,7 @@ model User {
 
   customers            Customer[]
   passwordResetTokens  PasswordResetToken[]
+  companies            UserCompany[]
 }
 
 model PasswordResetToken {
@@ -107,6 +108,7 @@ model Company {
   campaigns Campaign[]
   proposals Proposal[]
   proposalWhatsappTemplate ProposalWhatsappTemplate?
+  users UserCompany[]
 }
 
 model Customer {
@@ -293,4 +295,16 @@ model ProposalWhatsappTemplate {
   updatedAt        DateTime @updatedAt
 
   @@map("proposal_whatsapp_templates")
+}
+
+model UserCompany {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
 }

@@ -12,10 +12,11 @@ import {
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { WhatsappService } from './whatsapp.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 
 @ApiTags('whatsapp')
 @ApiBearerAuth('jwt')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyAccessGuard)
 @Controller({ path: 'whatsapp', version: '1' })
 export class WhatsappController {
   constructor(private readonly whatsappService: WhatsappService) {}

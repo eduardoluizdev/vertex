@@ -7,13 +7,16 @@ const LAST_12_MONTHS = 12;
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async getStats() {
+  async getStats(userId: string, role: string) {
+    const companiesFilter =
+      role === 'ADMIN' ? {} : { users: { some: { userId } } };
+
     const [totals, companiesCreatedAt, servicesByRecurrence, topCompanies] =
       await Promise.all([
-        this.getTotals(),
-        this.getCompaniesCreatedAt(),
-        this.getServicesByRecurrence(),
-        this.getTopCompaniesByCustomers(),
+        this.getTotals(companiesFilter),
+        this.getCompaniesCreatedAt(companiesFilter),
+        this.getServicesByRecurrence(companiesFilter),
+        this.getTopCompaniesByCustomers(companiesFilter),
       ]);
 
     const companiesByMonth = this.aggregateCompaniesByMonth(companiesCreatedAt);
@@ -33,16 +36,16 @@ export class DashboardService {
     };
   }
 
-  private async getTotals() {
+  private async getTotals(companiesFilter: object) {
     const [companies, customers, services] = await Promise.all([
-      this.prisma.company.count(),
-      this.prisma.customer.count(),
-      this.prisma.service.count(),
+      this.prisma.company.count({ where: companiesFilter }),
+      this.prisma.customer.count({ where: { company: companiesFilter } }),
+      this.prisma.service.count({ where: { company: companiesFilter } }),
     ]);
     return { companies, customers, services };
   }
 
-  private async getCompaniesCreatedAt() {
+  private async getCompaniesCreatedAt(companiesFilter: object) {
     const now = new Date();
     const startOfFirstMonth = new Date(
       now.getFullYear(),
@@ -55,7 +58,7 @@ export class DashboardService {
     );
 
     return this.prisma.company.findMany({
-      where: { createdAt: { gte: startOfFirstMonth } },
+      where: { ...companiesFilter, createdAt: { gte: startOfFirstMonth } },
       select: { createdAt: true },
     });
   }
@@ -85,16 +88,18 @@ export class DashboardService {
       .map(([month, count]) => ({ month, count }));
   }
 
-  private async getServicesByRecurrence() {
+  private async getServicesByRecurrence(companiesFilter: object) {
     return this.prisma.service.groupBy({
       by: ['recurrence'],
+      where: { company: companiesFilter },
       _count: { id: true },
     });
   }
 
-  private async getTopCompaniesByCustomers() {
+  private async getTopCompaniesByCustomers(companiesFilter: object) {
     return this.prisma.company.findMany({
       take: 5,
+      where: companiesFilter,
       orderBy: { customers: { _count: 'desc' } },
       select: {
         id: true,

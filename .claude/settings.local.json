@@ -13,7 +13,10 @@
       "Bash(npx tsc:*)",
       "Bash(npx prisma migrate dev:*)",
       "Bash(del:*)",
-      "Bash(npx prisma db push)"
+      "Bash(npx prisma db push)",
+      "Bash(npx prisma:*)",
+      "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }

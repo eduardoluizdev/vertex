@@ -5,10 +5,11 @@ import { ProposalsService } from './proposals.service';
 import { PrismaService } from '../../prisma.service';
 import { WhatsappModule } from '../whatsapp/whatsapp.module';
 import { EasypanelModule } from '../easypanel/easypanel.module';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 
 @Module({
   imports: [WhatsappModule, EasypanelModule],
   controllers: [ProposalsController, PublicProposalsController],
-  providers: [ProposalsService, PrismaService],
+  providers: [ProposalsService, PrismaService, CompanyAccessGuard],
 })
 export class ProposalsModule {}

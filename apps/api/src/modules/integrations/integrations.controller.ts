@@ -15,10 +15,11 @@ import { ApiBearerAuth, ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagg
 import { IntegrationsService } from './integrations.service';
 import { UpdateIntegrationsDto } from './dto/update-integrations.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 
 @ApiTags('integrations')
 @ApiBearerAuth('jwt')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyAccessGuard)
 @Controller({ path: 'integrations', version: '1' })
 export class IntegrationsController {
   constructor(private readonly integrationsService: IntegrationsService) {}

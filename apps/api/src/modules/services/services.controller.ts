@@ -15,10 +15,11 @@ import { ServicesService } from './services.service';
 import { CreateServiceDto } from './dto/create-service.dto';
 import { UpdateServiceDto } from './dto/update-service.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 
 @ApiTags('services')
 @ApiBearerAuth('jwt')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyAccessGuard)
 @Controller({ path: 'companies/:companyId/services', version: '1' })
 export class ServicesController {
   constructor(private readonly servicesService: ServicesService) {}

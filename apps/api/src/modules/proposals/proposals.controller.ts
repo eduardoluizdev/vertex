@@ -15,10 +15,11 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ProposalsService } from './proposals.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CompanyAccessGuard } from '../auth/guards/company-access.guard';
 
 @ApiTags('proposals')
 @ApiBearerAuth('jwt')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, CompanyAccessGuard)
 @Controller({ path: 'companies/:companyId/proposals', version: '1' })
 export class ProposalsController {
   constructor(private readonly proposalsService: ProposalsService) {}

@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { CreateCompanyDto } from './dto/create-company.dto';
@@ -11,7 +12,7 @@ import { UpdateCompanyDto } from './dto/update-company.dto';
 export class CompaniesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(createCompanyDto: CreateCompanyDto) {
+  async create(createCompanyDto: CreateCompanyDto, userId: string) {
     const existing = await this.prisma.company.findUnique({
       where: { email: createCompanyDto.email },
     });
@@ -20,13 +21,23 @@ export class CompaniesService {
       throw new ConflictException('Email already registered');
     }
 
-    return this.prisma.company.create({
+    const company = await this.prisma.company.create({
       data: createCompanyDto,
     });
+
+    await this.prisma.userCompany.create({
+      data: { userId, companyId: company.id },
+    });
+
+    return company;
   }
 
-  async findAll() {
+  async findAll(userId: string, role: string) {
+    const where =
+      role === 'ADMIN' ? {} : { users: { some: { userId } } };
+
     return this.prisma.company.findMany({
+      where,
       include: {
         _count: {
           select: { customers: true, services: true },
@@ -36,7 +47,7 @@ export class CompaniesService {
     });
   }
 
-  async findOne(id: string) {
+  async findOne(id: string, userId: string, role: string) {
     const company = await this.prisma.company.findUnique({
       where: { id },
       include: {
@@ -49,11 +60,20 @@ export class CompaniesService {
       throw new NotFoundException('Company not found');
     }
 
+    if (role !== 'ADMIN') {
+      const access = await this.prisma.userCompany.findUnique({
+        where: { userId_companyId: { userId, companyId: id } },
+      });
+      if (!access) {
+        throw new ForbiddenException('Acesso negado a esta empresa.');
+      }
+    }
+
     return company;
   }
 
-  async update(id: string, updateCompanyDto: UpdateCompanyDto) {
-    await this.findOne(id);
+  async update(id: string, updateCompanyDto: UpdateCompanyDto, userId: string, role: string) {
+    await this.findOne(id, userId, role);
 
     if (updateCompanyDto.email) {
       const existing = await this.prisma.company.findUnique({
@@ -71,8 +91,8 @@ export class CompaniesService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id);
+  async remove(id: string, userId: string, role: string) {
+    await this.findOne(id, userId, role);
     await this.prisma.company.delete({ where: { id } });
   }
 }
