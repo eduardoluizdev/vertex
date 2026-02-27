@@ -50,6 +50,7 @@ export class AuthService {
       email: user.email,
       name: user.name,
       role: user.role,
+      githubId: user.githubId,
     };
 
     return {
@@ -60,6 +61,7 @@ export class AuthService {
         email: user.email,
         role: user.role,
         avatar: user.avatar,
+        githubId: user.githubId,
       },
     };
   }

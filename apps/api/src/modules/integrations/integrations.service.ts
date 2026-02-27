@@ -77,7 +77,7 @@ export class IntegrationsService {
     
     const dbFrontendUrl = cfg.frontendUrl;
     const frontendUrl =
-      (dbFrontendUrl && dbFrontendUrl.length > 0) ? dbFrontendUrl : (process.env.FRONTEND_URL ?? 'http://localhost:3000');
+      (dbFrontendUrl && dbFrontendUrl.length > 0) ? dbFrontendUrl : (process.env.FRONTEND_URL ?? 'https://vertexhub.dev');
 
     const fromEmail = cfg.fromEmail || 'VertexHub <no-reply@vertexhub.dev>';
 

@@ -40,7 +40,7 @@ export function ResendStep({ companyId, onSuccess, onSkip }: ResendStepProps) {
     defaultValues: {
       apiKey: '',
       fromEmail: '',
-      frontendUrl: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+      frontendUrl: typeof window !== 'undefined' ? window.location.origin : 'https://vertexhub.dev',
     },
   });
 

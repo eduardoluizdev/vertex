@@ -88,7 +88,7 @@ export default async function IntegracoesPage() {
           <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <ResendCard
               initialApiKey={adminIntegrations.resend.apiKey ?? ''}
-              initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
+              initialFrontendUrl={adminIntegrations.resend.frontendUrl ?? 'https://vertexhub.dev'}
               initialFromEmail={adminIntegrations.resend.fromEmail ?? ''}
               isConfigured={adminIntegrations.resend.isConfigured ?? false}
             />
@@ -137,7 +137,7 @@ export default async function IntegracoesPage() {
               {companyIntegrations && (
                 <ResendCard
                   initialApiKey={companyIntegrations.resend.apiKey ?? ''}
-                  initialFrontendUrl={companyIntegrations.resend.frontendUrl ?? 'http://localhost:3000'}
+                  initialFrontendUrl={companyIntegrations.resend.frontendUrl ?? 'https://vertexhub.dev'}
                   initialFromEmail={companyIntegrations.resend.fromEmail ?? ''}
                   isConfigured={companyIntegrations.resend.isConfigured ?? false}
                   companyId={selectedCompanyId}

@@ -48,7 +48,9 @@ export default function ProfilePage() {
       if (result?.error) {
         setMessage({ type: 'error', text: 'Erro ao atualizar sessão após vínculo.' });
       } else {
+        await update(); // Atualiza os dados do useSession() localmente
         setMessage({ type: 'success', text: 'Conta GitHub vinculada com sucesso!' });
+        router.refresh(); 
         router.replace('/perfil');
       }
     } catch {
