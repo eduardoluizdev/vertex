@@ -11,7 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiResponse, ApiOperation } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { IntegrationsService, GITHUB_OAUTH_PROVIDER } from '../integrations/integrations.service';
+import { IntegrationsService } from '../integrations/integrations.service';
+import { ConfigService } from '@nestjs/config';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -23,6 +24,7 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly integrationsService: IntegrationsService,
+    private readonly configService: ConfigService,
   ) {}
 
   @Post('login')
@@ -76,12 +78,13 @@ export class AuthController {
 
     if (!githubConfig?.clientId) {
        // Se não estiver configurado, redireciona o front passando um erro
-       const frontUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+       const frontUrl = this.configService.get<string>('FRONTEND_URL') || 'https://vertexhub.dev';
        return req.res.redirect(`${frontUrl}/login?error=O Login via GitHub não está habilitado no momento.`);
     }
 
     const clientId = githubConfig.clientId;
-    const redirectUri = customRedirectUri || `${process.env.API_URL}/v1/auth/github/callback`;
+    const apiUrl = this.configService.get<string>('API_URL') || 'https://api.vertexhub.dev';
+    const redirectUri = customRedirectUri || `${apiUrl}/v1/auth/github/callback`;
     const scope = 'read:user user:email';
 
     let githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
@@ -96,7 +99,7 @@ export class AuthController {
   @Get('github/callback')
   @ApiOperation({ summary: 'Callback do fluxo OAuth do GitHub' })
   async githubAuthCallback(@Query('code') code: string, @Query('state') state: string, @Request() req: any) {
-    const frontUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    const frontUrl = this.configService.get<string>('FRONTEND_URL') || 'https://vertexhub.dev';
 
     if (!code) {
       return req.res.redirect(`${frontUrl}/login?error=Código de autorização não fornecido pelo GitHub.`);
