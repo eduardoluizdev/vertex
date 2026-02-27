@@ -53,9 +53,7 @@ export function LandingContent() {
       <header className="fixed top-0 z-50 w-full transition-all duration-300 bg-[#0A0A0A]/80 backdrop-blur-md border-b border-white/5">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 text-sm font-semibold tracking-tight text-white transition-opacity hover:opacity-80">
-            <VertexHubLogo className="w-5 h-5 text-vibe-primary" />
-            <span className="hidden md:block">VertexHub Plataforma</span>
-            <span className="block md:hidden">VertexHub</span>
+            <VertexHubLogo />            
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             <a href="#o-que-e" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">O que é</a>

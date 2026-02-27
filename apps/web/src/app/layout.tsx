@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   title: 'VertexHub',
   description: 'VertexHub web application',
   icons: {
-    icon: '/favicon.ico',
-    apple: '/favicon.ico',
-    shortcut: '/favicon.ico',
+    icon: '/favicon.png',
+    apple: '/favicon.png',
+    shortcut: '/favicon.png',
   },
 };
 
