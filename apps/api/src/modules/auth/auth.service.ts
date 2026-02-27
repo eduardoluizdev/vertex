@@ -169,9 +169,8 @@ export class AuthService {
   }
 
   async githubLogin(code: string, linkUserId?: string) {
-    // 1. Obter client_id e client_secret globais
-    const integrations = await this.integrationsService.getIntegrations();
-    const githubConfig = integrations.githubOauth;
+    // 1. Obter client_id e client_secret globais (raw, sem mascaramento)
+    const githubConfig = await this.integrationsService.getGithubOauthRawConfig();
 
     if (!githubConfig?.clientId || !githubConfig?.clientSecret) {
       throw new BadRequestException('GitHub Login não está configurado.');
@@ -188,7 +187,8 @@ export class AuthService {
       },
       body: JSON.stringify({
         client_id: clientId,
-        client_secret: clientSecret, // O Integration service mascara isso apenas na resposta para o front, aqui acessaremos direto da Config real.
+        client_secret: clientSecret,
+        code,
       }),
     });
 

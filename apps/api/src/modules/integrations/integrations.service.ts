@@ -169,6 +169,17 @@ export class IntegrationsService {
   }
 
   /**
+   * Returns the raw (unmasked) GitHub OAuth config for internal server-side use only.
+   * Never expose this to the frontend.
+   */
+  async getGithubOauthRawConfig(): Promise<GithubOauthConfig> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: GITHUB_OAUTH_PROVIDER, companyId: null },
+    });
+    return (row?.config ?? {}) as GithubOauthConfig;
+  }
+
+  /**
    * Retrieves the public Google Analytics configuration.
    * This is safe to expose without authentication.
    */
