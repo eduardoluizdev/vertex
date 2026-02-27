@@ -1,4 +1,6 @@
 import { Module } from "@nestjs/common";
+import { APP_FILTER } from "@nestjs/core";
+import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { StorageModule } from "./modules/storage/storage.module";
@@ -19,6 +21,7 @@ import { ProposalsModule } from "./modules/proposals/proposals.module";
 
 @Module({
   imports: [
+    SentryModule.forRoot(),
     ConfigModule.forRoot({ isGlobal: true }),
     ScheduleModule.forRoot(),
     StorageModule,
@@ -35,6 +38,10 @@ import { ProposalsModule } from "./modules/proposals/proposals.module";
     ProposalsModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [
+    { provide: APP_FILTER, useClass: SentryGlobalFilter },
+    AppService,
+    PrismaService,
+  ],
 })
 export class AppModule {}

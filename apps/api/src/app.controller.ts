@@ -1,4 +1,5 @@
 import { Controller, Get, HttpStatus } from "@nestjs/common";
+import { ApiExcludeEndpoint } from "@nestjs/swagger";
 import { ApiResponse } from "@nestjs/swagger";
 import { AppService } from "./app.service";
 
@@ -23,5 +24,11 @@ export class AppController {
   })
   getHealthCheck() {
     return this.appService.getHealthCheck();
+  }
+
+  @Get("debug-sentry")
+  @ApiExcludeEndpoint()
+  getError() {
+    throw new Error("My first Sentry error!");
   }
 }
