@@ -33,6 +33,14 @@ export interface IntegrationsData {
     trackingId: string;
     isConfigured: boolean;
   };
+  githubOauth?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    isConfigured: boolean;
+  };
 }
 
 export async function getIntegrationsServer(companyId?: string): Promise<IntegrationsData | null> {

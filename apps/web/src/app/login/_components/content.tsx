@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, ArrowLeft, Github } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,13 +12,49 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { AnimatedBackground } from '@/app/_components/animated-background';
 
-export function LoginContent() {
+function LoginContentInternal() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    const urlError = searchParams.get('error');
+
+    if (urlError) {
+      setError(urlError);
+    }
+
+    if (token) {
+      handleGithubTokenLogin(token);
+    }
+  }, [searchParams]);
+
+  async function handleGithubTokenLogin(token: string) {
+    setIsLoading(true);
+    try {
+      const result = await signIn('github-token', {
+        token,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError('Erro ao autenticar com o GitHub');
+        return;
+      }
+
+      router.push('/');
+      router.refresh();
+    } catch {
+      setError('Ocorreu um erro no login social');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,8 +67,6 @@ export function LoginContent() {
         password,
         redirect: false,
       });
-
-      console.log(result);
 
       if (result?.error) {
         setError('Email ou senha inválidos');
@@ -47,6 +81,11 @@ export function LoginContent() {
       setIsLoading(false);
     }
   }
+
+  const handleGithubClick = () => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    window.location.href = `${apiUrl}/v1/auth/github`;
+  };
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-6 py-12">
@@ -154,6 +193,28 @@ export function LoginContent() {
             </Button>
           </form>
 
+          {/* Social Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-white/10" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-vibe-bg px-2 text-gray-500">Ou continue com</span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="h-12 w-full bg-white/5 border-white/10 text-white hover:bg-white/10 hover:text-white"
+            onClick={handleGithubClick}
+            disabled={isLoading}
+          >
+            <Github className="mr-2 h-5 w-5" />
+            GitHub
+          </Button>
+
+
           {/* Register Link */}
           <p className="text-center text-sm text-gray-400">
             Não tem uma conta?{' '}
@@ -168,4 +229,12 @@ export function LoginContent() {
       </div>
     </div>
   );
+}
+
+export function LoginContent() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><AnimatedBackground /> <div className="text-white animate-pulse">Carregando...</div></div>}>
+      <LoginContentInternal />
+    </Suspense>
+  )
 }

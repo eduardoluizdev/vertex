@@ -29,6 +29,14 @@ export interface IntegrationsData {
     isConfigured: boolean;
     isSandbox: boolean;
   };
+  githubOauth?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    clientId: string;
+    clientSecret: string;
+    isConfigured: boolean;
+  };
 }
 
 export interface TestResult {
@@ -294,6 +302,48 @@ export async function updateGoogleAnalyticsIntegration(
     const data = await response.json();
     revalidatePath('/integracoes');
     revalidatePath('/', 'layout'); // revalidate layout to apply GA globally
+    return { success: true, message: 'Configurações salvas com sucesso!', data };
+  } catch {
+    return { success: false, message: 'Erro de comunicação com o servidor.' };
+  }
+}
+
+export async function updateGithubOauthIntegration(
+  formData: FormData
+): Promise<{
+  success: boolean;
+  message: string;
+  data?: IntegrationsData;
+}> {
+  const clientId = formData.get('githubClientId') as string | null;
+  const clientSecret = formData.get('githubClientSecret') as string | null;
+
+  const config: Record<string, string> = {};
+  if (clientId?.trim()) config.clientId = clientId.trim();
+  if (clientSecret?.trim()) config.clientSecret = clientSecret.trim();
+
+  if (Object.keys(config).length === 0) {
+    return { success: false, message: 'Nenhuma alteração detectada.' };
+  }
+
+  try {
+    const url = `/v1/integrations/githubOauth`;
+    const response = await apiClient(url, {
+      method: 'PATCH',
+      body: JSON.stringify({ config }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message:
+          (err as { message?: string }).message ?? 'Erro ao salvar configurações.',
+      };
+    }
+
+    const data = await response.json();
+    revalidatePath('/integracoes');
     return { success: true, message: 'Configurações salvas com sucesso!', data };
   } catch {
     return { success: false, message: 'Erro de comunicação com o servidor.' };

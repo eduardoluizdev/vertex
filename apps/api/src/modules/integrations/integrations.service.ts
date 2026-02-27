@@ -7,6 +7,7 @@ export const RESEND_PROVIDER = 'resend';
 export const ASAAS_PROVIDER = 'asaas';
 export const ABACATEPAY_PROVIDER = 'abacatepay';
 export const GOOGLE_ANALYTICS_PROVIDER = 'googleAnalytics';
+export const GITHUB_OAUTH_PROVIDER = 'githubOauth';
 
 /** Instancia o cliente Resend sempre com a região São Paulo (sa-east-1) */
 function createResendClient(apiKey: string): Resend {
@@ -36,6 +37,11 @@ interface AbacatePayConfig {
 
 interface GoogleAnalyticsConfig {
   trackingId?: string;
+}
+
+interface GithubOauthConfig {
+  clientId?: string;
+  clientSecret?: string;
 }
 
 @Injectable()
@@ -107,6 +113,17 @@ export class IntegrationsService {
     const trackingId = googleAnalyticsCfg.trackingId ?? '';
     const isGoogleAnalyticsConfigured = trackingId.startsWith('G-');
 
+    const githubOauthRow = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: GITHUB_OAUTH_PROVIDER,
+        companyId: null, // Sempre global
+      },
+    });
+    const githubOauthCfg = (githubOauthRow?.config ?? {}) as GithubOauthConfig;
+    const githubClientId = githubOauthCfg.clientId ?? '';
+    const githubClientSecret = githubOauthCfg.clientSecret ?? '';
+    const isGithubOauthConfigured = githubClientId.length > 5 && githubClientSecret.length > 5;
+
     return {
       resend: {
         name: row?.name ?? 'Resend',
@@ -139,7 +156,15 @@ export class IntegrationsService {
         enabled: googleAnalyticsRow?.enabled ?? true,
         trackingId,
         isConfigured: isGoogleAnalyticsConfigured,
-      }
+      },
+      githubOauth: !companyId ? {
+        name: githubOauthRow?.name ?? 'GitHub Login Social',
+        provider: GITHUB_OAUTH_PROVIDER,
+        enabled: githubOauthRow?.enabled ?? true,
+        clientId: githubClientId,
+        clientSecret: this.maskKey(githubClientSecret), // Não expor o secret inteiro pro frontend
+        isConfigured: isGithubOauthConfigured,
+      } : undefined, // GitHub OAuth é apenas admin (global)
     };
   }
 

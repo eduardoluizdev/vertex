@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../../prisma.service';
+import { IntegrationsService, GITHUB_OAUTH_PROVIDER } from '../integrations/integrations.service';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
@@ -21,6 +22,7 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
     private readonly prisma: PrismaService,
+    private readonly integrationsService: IntegrationsService,
   ) {}
 
   async login(loginDto: LoginDto) {
@@ -158,5 +160,127 @@ export class AuthService {
     }
 
     return { valid: true };
+  }
+
+  async githubLogin(code: string) {
+    // 1. Obter client_id e client_secret globais
+    const integrations = await this.integrationsService.getIntegrations();
+    const githubConfig = integrations.githubOauth;
+
+    if (!githubConfig?.clientId || !githubConfig?.clientSecret) {
+      throw new BadRequestException('GitHub Login não está configurado.');
+    }
+
+    const { clientId, clientSecret } = githubConfig;
+
+    // 2. Trocar código por access_token do GitHub (usando fetch nativo)
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret, // O Integration service mascara isso apenas na resposta para o front, aqui acessaremos direto da Config real.
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      throw new BadRequestException('Erro ao autenticar com o GitHub');
+    }
+
+    const tokenData = await tokenResponse.json();
+    const githubAccessToken = tokenData.access_token;
+
+    if (!githubAccessToken) {
+      throw new BadRequestException('Código GitHub inválido ou expirado.');
+    }
+
+    // 3. Obter perfil do usuário logado via GitHub
+    const userResponse = await fetch('https://api.github.com/user', {
+      headers: {
+        Authorization: `Bearer ${githubAccessToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    });
+
+    if (!userResponse.ok) {
+      throw new BadRequestException('Erro ao obter perfil do GitHub');
+    }
+
+    const githubUser = await userResponse.json();
+
+    let email = githubUser.email;
+
+    // Ocasionalmente, usuários podem deixar o email privado no GitHub.
+    // Nesses casos precisamos fazer outra requisição.
+    if (!email) {
+      const emailResponse = await fetch('https://api.github.com/user/emails', {
+        headers: {
+          Authorization: `Bearer ${githubAccessToken}`,
+          Accept: 'application/vnd.github.v3+json',
+        },
+      });
+
+      if (emailResponse.ok) {
+        const emails = await emailResponse.json();
+        const primaryEmail = emails.find((e: any) => e.primary && e.verified);
+        if (primaryEmail) {
+          email = primaryEmail.email;
+        } else if (emails.length > 0) {
+           email = emails[0].email;
+        }
+      }
+    }
+
+    if (!email) {
+      throw new BadRequestException('Não foi possível obter um email da conta GitHub.');
+    }
+
+    // 4. Checar se usuário já existe
+    let user = await this.usersService.findByEmail(email);
+
+    if (!user) {
+      // Cria o usuário
+      // Senha aleatória gigante só para preencher o campo required do DB, ele usará GitHub para logar
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+      user = await this.prisma.user.create({
+        data: {
+          name: githubUser.name || githubUser.login,
+          email: email,
+          password: hashedPassword,
+          avatar: githubUser.avatar_url,
+          role: 'USER', // Role padrão para quem se cadastra por redes sociais
+        }
+      });
+    } else if (!user.avatar && githubUser.avatar_url) {
+       // Atualiza a foto se não tiver
+       user = await this.prisma.user.update({
+         where: { id: user.id },
+         data: { avatar: githubUser.avatar_url }
+       })
+    }
+
+    // 5. Gerar e retornar JWT próprio
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        avatar: user.avatar,
+      },
+    };
   }
 }

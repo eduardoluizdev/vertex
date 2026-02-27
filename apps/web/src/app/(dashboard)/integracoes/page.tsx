@@ -14,6 +14,7 @@ import { ProposalDomainCard } from './_components/proposal-domain-card';
 import { getWhatsappTemplate, getProposalIntegration } from '@/app/(dashboard)/propostas/_actions/proposal-actions';
 import { apiClient } from '@/lib/api';
 import { NotificationsCard } from './_components/notifications-card';
+import { GithubOauthCard } from './_components/github-oauth-card';
 
 export const metadata = {
   title: 'Integrações — VertexHub',
@@ -44,7 +45,7 @@ export default async function IntegracoesPage() {
     selectedCompanyId ? getDomainStatus(selectedCompanyId) : Promise.resolve(null),
     selectedCompanyId ? getWhatsappTemplate().catch(() => null) : Promise.resolve(null),
     selectedCompanyId ? getProposalIntegration().catch(() => ({ webUrl: '' })) : Promise.resolve(null),
-    selectedCompanyId ? apiClient(`/v1/companies/${selectedCompanyId}`).then(res => res.json()).catch(() => null) : Promise.resolve(null),
+    selectedCompanyId ? apiClient(`/v1/companies/${selectedCompanyId}`).then((res: Response) => res.json()).catch(() => null) : Promise.resolve(null),
   ]);
 
   return (
@@ -94,6 +95,11 @@ export default async function IntegracoesPage() {
             <GoogleAnalyticsCard
               initialTrackingId={adminIntegrations.googleAnalytics?.trackingId ?? ''}
               isConfigured={adminIntegrations.googleAnalytics?.isConfigured ?? false}
+            />
+            <GithubOauthCard
+              initialClientId={adminIntegrations.githubOauth?.clientId ?? ''}
+              initialClientSecret={adminIntegrations.githubOauth?.clientSecret ?? ''}
+              isConfigured={adminIntegrations.githubOauth?.isConfigured ?? false}
             />
           </div>
         </section>

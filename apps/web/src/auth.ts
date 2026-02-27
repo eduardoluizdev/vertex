@@ -46,6 +46,44 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
       },
     }),
+    Credentials({
+      id: 'github-token',
+      name: 'GitHub Token',
+      credentials: {
+        token: { label: 'Token', type: 'text' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.token) {
+          return null;
+        }
+
+        try {
+          const response = await fetch(`${process.env.API_URL}/v1/auth/profile`, {
+            method: 'GET',
+            headers: {
+              Authorization: `Bearer ${credentials.token}`,
+            },
+          });
+
+          if (!response.ok) {
+            return null;
+          }
+
+          const user = await response.json();
+
+          return {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            image: user.avatar,
+            accessToken: credentials.token as string,
+          };
+        } catch {
+          return null;
+        }
+      },
+    }),
   ],
   session: {
     strategy: 'jwt',
