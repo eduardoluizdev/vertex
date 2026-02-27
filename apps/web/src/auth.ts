@@ -41,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: data.user.role,
             image: data.user.avatar,
             accessToken: data.access_token,
+            githubId: data.user.githubId,
           };
         } catch {
           return null;
