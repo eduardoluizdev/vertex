@@ -78,6 +78,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             role: user.role,
             image: user.avatar,
             accessToken: credentials.token as string,
+            githubId: user.githubId,
           };
         } catch {
           return null;
@@ -97,6 +98,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.id = user.id;
         token.role = (user as any).role;
         token.accessToken = (user as any).accessToken;
+        token.githubId = (user as any).githubId;
       }
       return token;
     },
@@ -104,6 +106,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         (session as any).user.role = token.role;
+        (session as any).user.githubId = token.githubId;
         (session as any).accessToken = token.accessToken;
       }
       return session;

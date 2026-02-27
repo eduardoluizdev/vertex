@@ -41,6 +41,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    return this.generateToken(user);
+  }
+
+  private async generateToken(user: any) {
     const payload = {
       sub: user.id,
       email: user.email,
@@ -162,7 +166,7 @@ export class AuthService {
     return { valid: true };
   }
 
-  async githubLogin(code: string) {
+  async githubLogin(code: string, linkUserId?: string) {
     // 1. Obter client_id e client_secret globais
     const integrations = await this.integrationsService.getIntegrations();
     const githubConfig = integrations.githubOauth;
@@ -210,11 +214,10 @@ export class AuthService {
     }
 
     const githubUser = await userResponse.json();
-
+    const githubId = String(githubUser.id);
     let email = githubUser.email;
 
-    // Ocasionalmente, usuários podem deixar o email privado no GitHub.
-    // Nesses casos precisamos fazer outra requisição.
+    // ... (rest of email fetching logic remains same)
     if (!email) {
       const emailResponse = await fetch('https://api.github.com/user/emails', {
         headers: {
@@ -238,12 +241,57 @@ export class AuthService {
       throw new BadRequestException('Não foi possível obter um email da conta GitHub.');
     }
 
-    // 4. Checar se usuário já existe
-    let user = await this.usersService.findByEmail(email);
+    // Caso seja uma solicitação de VÍNCULO (usuário já logado)
+    if (linkUserId) {
+      const existingUser = await this.prisma.user.findUnique({
+        where: { id: linkUserId },
+      });
+
+      if (!existingUser) {
+        throw new BadRequestException('Usuário não encontrado para vínculo.');
+      }
+
+      // Verifica se esse GitHub já está vinculado a OUTRA conta
+      const userWithThisGithub = await this.prisma.user.findUnique({
+        where: { githubId },
+      });
+
+      if (userWithThisGithub && userWithThisGithub.id !== linkUserId) {
+        throw new BadRequestException('Esta conta GitHub já está vinculada a outro usuário.');
+      }
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: linkUserId },
+        data: {
+          githubId,
+          avatar: existingUser.avatar || githubUser.avatar_url,
+        },
+      });
+
+      return this.generateToken(updatedUser);
+    }
+
+    // FLUXO DE LOGIN/CADASTRO NORMAL
+    // 1. Tenta buscar pelo githubId primeiro (vínculo forte)
+    let user = await this.prisma.user.findUnique({
+      where: { githubId },
+    });
+
+    // 2. Se não achou por ID, tenta por email (vínculo automático por email)
+    if (!user) {
+      user = await this.usersService.findByEmail(email);
+      
+      // Se achou por email, vamos "carimbar" o githubId nele para facilitar futuros logins
+      if (user) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { githubId }
+        });
+      }
+    }
 
     if (!user) {
       // Cria o usuário
-      // Senha aleatória gigante só para preencher o campo required do DB, ele usará GitHub para logar
       const randomPassword = crypto.randomBytes(32).toString('hex');
       const hashedPassword = await bcrypt.hash(randomPassword, 10);
 
@@ -253,7 +301,8 @@ export class AuthService {
           email: email,
           password: hashedPassword,
           avatar: githubUser.avatar_url,
-          role: 'USER', // Role padrão para quem se cadastra por redes sociais
+          githubId,
+          role: 'USER',
         }
       });
     } else if (!user.avatar && githubUser.avatar_url) {
@@ -264,23 +313,6 @@ export class AuthService {
        })
     }
 
-    // 5. Gerar e retornar JWT próprio
-    const payload = {
-      sub: user.id,
-      email: user.email,
-      name: user.name,
-      role: user.role,
-    };
-
-    return {
-      access_token: await this.jwtService.signAsync(payload),
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-      },
-    };
+    return this.generateToken(user);
   }
 }

@@ -18,6 +18,7 @@ import {
   Plug2,
   Mail,
   FileText,
+  User,
 } from 'lucide-react';
 import { CompanySelector, type CompanyOption } from '@/components/company-selector';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
@@ -251,8 +252,15 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
             align={collapsed ? 'end' : 'start'}
             className="w-52"
           >
+            <DropdownMenuItem asChild>
+              <Link href="/perfil" className="flex items-center gap-2 cursor-pointer">
+                <User className="size-4" />
+                Meu Perfil
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => signOut({ callbackUrl: '/login' })}
+              className="text-red-500 focus:text-red-500"
             >
               <LogOut className="size-4" />
               Sair

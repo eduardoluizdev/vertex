@@ -70,7 +70,7 @@ export class AuthController {
 
   @Get('github')
   @ApiOperation({ summary: 'Inicia o fluxo OAuth com o GitHub' })
-  async githubAuth(@Request() req: any, @Query('redirect_uri') customRedirectUri?: string) {
+  async githubAuth(@Request() req: any, @Query('redirect_uri') customRedirectUri?: string, @Query('state') state?: string) {
     const integrations = await this.integrationsService.getIntegrations();
     const githubConfig = integrations.githubOauth;
 
@@ -84,14 +84,18 @@ export class AuthController {
     const redirectUri = customRedirectUri || `${process.env.API_URL}/v1/auth/github/callback`;
     const scope = 'read:user user:email';
 
-    const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+    let githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${encodeURIComponent(scope)}`;
+
+    if (state) {
+      githubAuthUrl += `&state=${encodeURIComponent(state)}`;
+    }
 
     return req.res.redirect(githubAuthUrl);
   }
 
   @Get('github/callback')
   @ApiOperation({ summary: 'Callback do fluxo OAuth do GitHub' })
-  async githubAuthCallback(@Query('code') code: string, @Request() req: any) {
+  async githubAuthCallback(@Query('code') code: string, @Query('state') state: string, @Request() req: any) {
     const frontUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
     if (!code) {
@@ -99,10 +103,18 @@ export class AuthController {
     }
 
     try {
-      const result = await this.authService.githubLogin(code);
+      let linkUserId: string | undefined;
+      let redirectPath = '/login';
+
+      if (state && state.startsWith('link:')) {
+        linkUserId = state.split(':')[1];
+        redirectPath = '/perfil'; // Após vincular, volta pro perfil
+      }
+
+      const result = await this.authService.githubLogin(code, linkUserId);
       
       // Sucesso! Redireciona o frontend passando o token JWT
-      return req.res.redirect(`${frontUrl}/login?token=${result.access_token}`);
+      return req.res.redirect(`${frontUrl}${redirectPath}?token=${result.access_token}`);
       
     } catch (error: any) {
       const errorMsg = encodeURIComponent(error.message || 'Erro ao processar login com GitHub.');
