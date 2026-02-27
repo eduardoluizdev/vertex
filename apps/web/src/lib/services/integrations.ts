@@ -49,3 +49,20 @@ export async function getIntegrationsServer(companyId?: string): Promise<Integra
   }
 }
 
+export async function getPublicGoogleAnalyticsServer(): Promise<{
+  trackingId: string;
+  enabled: boolean;
+  isConfigured: boolean;
+} | null> {
+  try {
+    const response = await apiClient('/v1/public/integrations/google-analytics', {
+      cache: 'no-store',
+    } as RequestInit);
+
+    if (!response.ok) return null;
+    return response.json();
+  } catch {
+    return null;
+  }
+}
+

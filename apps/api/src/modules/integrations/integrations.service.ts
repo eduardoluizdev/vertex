@@ -144,6 +144,30 @@ export class IntegrationsService {
   }
 
   /**
+   * Retrieves the public Google Analytics configuration.
+   * This is safe to expose without authentication.
+   */
+  async getPublicGoogleAnalytics() {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: {
+        provider: GOOGLE_ANALYTICS_PROVIDER,
+        companyId: null, // Global configuration
+      },
+    });
+
+    const config = (row?.config ?? {}) as GoogleAnalyticsConfig;
+    const trackingId = config.trackingId ?? '';
+    const isConfigured = trackingId.startsWith('G-');
+    const enabled = row?.enabled ?? true;
+
+    return {
+      trackingId,
+      enabled: isConfigured ? enabled : false,
+      isConfigured
+    };
+  }
+
+  /**
    * Upserts the integration config for a given provider.
    * The config JSON is merged (patch semantics) so callers only send changed fields.
    */
