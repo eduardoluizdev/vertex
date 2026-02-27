@@ -16,7 +16,9 @@
       "Bash(npx prisma db push)",
       "Bash(npx prisma:*)",
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma:*)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(DATABASE_URL=\"postgres://postgres:ff1c7412050a43673c04480f55d0ec35@cloud.vertexhub.dev:5432/vertex?sslmode=disable\" npx prisma:*)",
+      "Bash(psql:*)"
     ]
   }
 }
