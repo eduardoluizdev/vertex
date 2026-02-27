@@ -1,15 +1,15 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
-import { 
-  Home, 
-  LogOut, 
-  PanelLeft, 
-  Users, 
-  Briefcase, 
+import { useState } from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import {
+  Home,
+  LogOut,
+  PanelLeft,
+  Users,
+  Briefcase,
   LayoutDashboard,
   Settings,
   Shield,
@@ -19,31 +19,34 @@ import {
   Mail,
   FileText,
   User,
-} from 'lucide-react';
-import { CompanySelector, type CompanyOption } from '@/components/company-selector';
-import { VertexHubLogo } from '@/components/vertexhub-logo';
-import { SearchBar } from '@/components/sidebar/search-bar';
-import { NavSection } from '@/components/sidebar/nav-section';
-import { NavItem } from '@/components/sidebar/nav-item';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "lucide-react";
+import {
+  CompanySelector,
+  type CompanyOption,
+} from "@/components/company-selector";
+import { VertexHubLogo } from "@/components/vertexhub-logo";
+import { SearchBar } from "@/components/sidebar/search-bar";
+import { NavSection } from "@/components/sidebar/nav-section";
+import { NavItem } from "@/components/sidebar/nav-item";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Tooltip,
   TooltipProvider,
   TooltipTrigger,
   TooltipContent,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
 function getInitials(name: string) {
   return name
-    .split(' ')
+    .split(" ")
     .map((n) => n[0])
-    .join('')
+    .join("")
     .toUpperCase()
     .slice(0, 2);
 }
@@ -55,13 +58,13 @@ interface AppSidebarProps {
 
 export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  const userName = session?.user?.name ?? '';
+  const userName = session?.user?.name ?? "";
   const userImage = session?.user?.image ?? undefined;
-  const userEmail = session?.user?.email ?? '';
+  const userEmail = session?.user?.email ?? "";
 
   // Filter function for search
   const filterBySearch = (label: string) => {
@@ -72,11 +75,13 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
   return (
     <aside
       className={`flex h-screen flex-col border-r bg-sidebar py-4 transition-all duration-300 ${
-        collapsed ? 'w-16' : 'w-72'
+        collapsed ? "w-16" : "w-72"
       }`}
     >
       {/* Header */}
-      <div className={`flex items-center ${collapsed ? 'justify-center px-3' : 'justify-between px-4'}`}>
+      <div
+        className={`flex items-center ${collapsed ? "justify-center px-3" : "justify-between px-4"}`}
+      >
         {collapsed ? (
           <TooltipProvider>
             <Tooltip>
@@ -85,7 +90,7 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                   onClick={() => setCollapsed(false)}
                   className="flex size-10 items-center justify-center"
                 >
-                  <VertexHubLogo className="size-7 text-sidebar-foreground" />
+                  <VertexHubLogo />
                 </button>
               </TooltipTrigger>
               <TooltipContent side="right">Expandir</TooltipContent>
@@ -128,18 +133,18 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         <div className="mt-6 flex flex-1 flex-col gap-6 overflow-y-auto px-3">
           {/* MENU Section */}
           <NavSection title="MENU" collapsed={collapsed}>
-            {filterBySearch('Home') && (
+            {filterBySearch("Home") && (
               <NavItem
                 href="/dashboard"
                 icon={Home}
                 label="Home"
-                isActive={pathname === '/dashboard'}
+                isActive={pathname === "/dashboard"}
                 collapsed={collapsed}
               />
             )}
             {selectedCompanyId && (
               <>
-                {filterBySearch('Dashboard') && (
+                {filterBySearch("Dashboard") && (
                   <NavItem
                     href={`/empresas/${selectedCompanyId}`}
                     icon={LayoutDashboard}
@@ -148,39 +153,39 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                     collapsed={collapsed}
                   />
                 )}
-                {filterBySearch('Clientes') && (
+                {filterBySearch("Clientes") && (
                   <NavItem
                     href={`/empresas/${selectedCompanyId}/clientes`}
                     icon={Users}
                     label="Clientes"
-                    isActive={pathname?.includes('/clientes')}
+                    isActive={pathname?.includes("/clientes")}
                     collapsed={collapsed}
                   />
                 )}
-                {filterBySearch('Serviços') && (
+                {filterBySearch("Serviços") && (
                   <NavItem
                     href={`/empresas/${selectedCompanyId}/servicos`}
                     icon={Briefcase}
                     label="Serviços"
-                    isActive={pathname?.includes('/servicos')}
+                    isActive={pathname?.includes("/servicos")}
                     collapsed={collapsed}
                   />
                 )}
-                {filterBySearch('Campanhas') && (
+                {filterBySearch("Campanhas") && (
                   <NavItem
                     href="/campanhas"
                     icon={Mail}
                     label="Campanhas"
-                    isActive={pathname?.includes('/campanhas')}
+                    isActive={pathname?.includes("/campanhas")}
                     collapsed={collapsed}
                   />
                 )}
-                {filterBySearch('Propostas') && (
+                {filterBySearch("Propostas") && (
                   <NavItem
                     href="/propostas"
                     icon={FileText}
                     label="Propostas"
-                    isActive={pathname?.includes('/propostas')}
+                    isActive={pathname?.includes("/propostas")}
                     collapsed={collapsed}
                   />
                 )}
@@ -190,30 +195,30 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
 
           {/* SUPORTE Section */}
           <NavSection title="SUPORTE" collapsed={collapsed}>
-            {filterBySearch('Integrações') && (
+            {filterBySearch("Integrações") && (
               <NavItem
                 href="/integracoes"
                 icon={Plug2}
                 label="Integrações"
-                isActive={pathname === '/integracoes'}
+                isActive={pathname === "/integracoes"}
                 collapsed={collapsed}
               />
             )}
-            {filterBySearch('Segurança') && (
+            {filterBySearch("Segurança") && (
               <NavItem
                 href="/security"
                 icon={Shield}
                 label="Segurança"
-                isActive={pathname === '/security'}
+                isActive={pathname === "/security"}
                 collapsed={collapsed}
               />
             )}
-            {filterBySearch('Ajuda') && (
+            {filterBySearch("Ajuda") && (
               <NavItem
                 href="/help"
                 icon={HelpCircle}
                 label="Ajuda & Centro"
-                isActive={pathname === '/help'}
+                isActive={pathname === "/help"}
                 collapsed={collapsed}
               />
             )}
@@ -226,12 +231,12 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
         <DropdownMenu>
           <DropdownMenuTrigger
             className={`flex w-full items-center rounded-lg py-2.5 outline-none transition-all duration-200 hover:bg-sidebar-accent ${
-              collapsed ? 'justify-center px-0' : 'gap-3 px-3'
+              collapsed ? "justify-center px-0" : "gap-3 px-3"
             }`}
           >
             <Avatar size="sm">
               <AvatarImage src={userImage} alt={userName} />
-              <AvatarFallback>{getInitials(userName || 'U')}</AvatarFallback>
+              <AvatarFallback>{getInitials(userName || "U")}</AvatarFallback>
             </Avatar>
             {!collapsed && (
               <>
@@ -248,18 +253,21 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
             )}
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            side={collapsed ? 'right' : 'top'}
-            align={collapsed ? 'end' : 'start'}
+            side={collapsed ? "right" : "top"}
+            align={collapsed ? "end" : "start"}
             className="w-52"
           >
             <DropdownMenuItem asChild>
-              <Link href="/perfil" className="flex items-center gap-2 cursor-pointer">
+              <Link
+                href="/perfil"
+                className="flex items-center gap-2 cursor-pointer"
+              >
                 <User className="size-4" />
                 Meu Perfil
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem
-              onClick={() => signOut({ callbackUrl: '/login' })}
+              onClick={() => signOut({ callbackUrl: "/login" })}
               className="text-red-500 focus:text-red-500"
             >
               <LogOut className="size-4" />
