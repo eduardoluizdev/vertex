@@ -59,7 +59,7 @@ export default function ProfilePage() {
   };
 
   const handleLinkGithub = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vertexhub.dev';
     const userId = session?.user?.id;
     if (!userId) return;
 

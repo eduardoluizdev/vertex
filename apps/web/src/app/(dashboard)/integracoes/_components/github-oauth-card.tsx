@@ -58,7 +58,7 @@ export function GithubOauthCard({
   const [isSaving, startSave] = useTransition();
   const [isRemoving, startRemove] = useTransition();
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vertexhub.dev';
   const callbackUrl = `${apiUrl}/v1/auth/github/callback`;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

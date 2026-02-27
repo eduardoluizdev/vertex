@@ -83,7 +83,7 @@ function LoginContentInternal() {
   }
 
   const handleGithubClick = () => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.vertexhub.dev';
     window.location.href = `${apiUrl}/v1/auth/github`;
   };
 
