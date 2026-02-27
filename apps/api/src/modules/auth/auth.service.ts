@@ -265,10 +265,14 @@ export class AuthService {
       const updatedUser = await this.prisma.user.update({
         where: { id: linkUserId },
         data: {
-          githubId,
+          githubId: githubId,
           avatar: existingUser.avatar || githubUser.avatar_url,
         },
       });
+
+      if (!updatedUser.githubId) {
+        throw new BadRequestException('Erro técnico: O ID do GitHub não pôde ser salvo.');
+      }
 
       return this.generateToken(updatedUser);
     }

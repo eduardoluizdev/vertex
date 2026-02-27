@@ -15,8 +15,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         try {
+          const apiUrl = process.env.API_URL || 'https://api.vertexhub.dev';
           const response = await fetch(
-            `${process.env.API_URL}/v1/auth/login`,
+            `${apiUrl}/v1/auth/login`,
             {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -58,7 +59,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         }
 
         try {
-          const response = await fetch(`${process.env.API_URL}/v1/auth/profile`, {
+          const apiUrl = process.env.API_URL || 'https://api.vertexhub.dev';
+          const response = await fetch(`${apiUrl}/v1/auth/profile`, {
             method: 'GET',
             headers: {
               Authorization: `Bearer ${credentials.token}`,
