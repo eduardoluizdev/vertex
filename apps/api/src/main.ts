@@ -7,6 +7,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.use(require('express').json({ limit: '10mb' }));
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { 
+import {
   Check,
   X,
   Search,
@@ -19,11 +19,22 @@ import {
   Zap,
   Calendar,
   Clock,
-  Monitor
+  Monitor,
+  ArrowRight,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
 import { useState } from 'react';
+
+interface RecentPost {
+  id: string;
+  headline: string;
+  slug: string;
+  excerpt: string | null;
+  coverImage: string | null;
+  publishedAt: string | null;
+  author: { name: string };
+}
 
 // FAQ Item component to handle state
 function FaqItem({ question, answer }: { question: string, answer: string }) {
@@ -46,7 +57,7 @@ function FaqItem({ question, answer }: { question: string, answer: string }) {
   );
 }
 
-export function LandingContent() {
+export function LandingContent({ recentPosts = [] }: { recentPosts?: RecentPost[] }) {
   return (
     <div className="min-h-screen bg-[#0A0A0A] font-sans antialiased text-neutral-300 selection:bg-vibe-primary selection:text-black">
       {/* Header */}
@@ -59,6 +70,7 @@ export function LandingContent() {
             <a href="#o-que-e" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">O que é</a>
             <a href="#funcionalidades" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">Funcionalidades</a>
             <a href="#pra-quem" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">Pra quem</a>
+            <a href="#blog" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">Blog</a>
             <a href="#faq" className="rounded-md px-3 py-1.5 text-xs text-neutral-400 transition-colors hover:text-white">FAQ</a>
           </nav>
           <div className="flex gap-2">
@@ -313,6 +325,68 @@ export function LandingContent() {
             </div>
           </div>
         </section>
+
+        {/* Blog */}
+        {recentPosts.length > 0 && (
+          <section id="blog" className="relative py-24 border-t border-white/5">
+            <div className="mx-auto max-w-5xl px-4 sm:px-6">
+              <div className="flex items-end justify-between mb-10">
+                <div>
+                  <p className="text-xs font-medium uppercase tracking-wider text-vibe-primary">Do nosso blog</p>
+                  <h2 className="mt-2 text-2xl font-bold tracking-tight text-white sm:text-3xl">Últimos artigos</h2>
+                </div>
+                <Link href="/blog" className="hidden sm:inline-flex items-center gap-1.5 text-sm text-neutral-400 hover:text-white transition-colors">
+                  Ver todos <ArrowRight className="size-4" />
+                </Link>
+              </div>
+
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                {recentPosts.slice(0, 4).map((post) => (
+                  <Link
+                    key={post.id}
+                    href={`/blog/${post.slug}`}
+                    className="group flex flex-col rounded-xl border border-white/5 bg-white/[0.02] overflow-hidden hover:border-white/10 hover:bg-white/[0.04] transition-all"
+                  >
+                    {post.coverImage ? (
+                      <img
+                        src={post.coverImage}
+                        alt={post.headline}
+                        className="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full aspect-video bg-white/5 flex items-center justify-center">
+                        <span className="text-2xl text-white/10">✦</span>
+                      </div>
+                    )}
+                    <div className="flex flex-col flex-1 p-4 gap-2">
+                      <h3 className="text-sm font-semibold text-white leading-snug group-hover:text-vibe-primary transition-colors line-clamp-2">
+                        {post.headline}
+                      </h3>
+                      {post.excerpt && (
+                        <p className="text-xs text-neutral-400 leading-relaxed line-clamp-2">{post.excerpt}</p>
+                      )}
+                      <div className="mt-auto pt-2 flex items-center gap-1.5 text-xs text-neutral-500">
+                        <Calendar className="size-3" />
+                        {post.publishedAt
+                          ? new Date(post.publishedAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : post.author.name}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="mt-8 text-center sm:hidden">
+                <Link href="/blog">
+                  <Button variant="outline" size="sm" className="border-white/10 text-neutral-300 hover:text-white hover:bg-white/5">
+                    Ver todos os artigos <ArrowRight className="size-4 ml-1" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* FAQ */}
         <section id="faq" className="relative py-24">
