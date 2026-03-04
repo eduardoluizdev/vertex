@@ -37,6 +37,13 @@ export interface IntegrationsData {
     clientSecret: string;
     isConfigured: boolean;
   };
+  apify?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    apiKey: string;
+    isConfigured: boolean;
+  };
 }
 
 export interface TestResult {
@@ -303,6 +310,47 @@ export async function updateGoogleAnalyticsIntegration(
     revalidatePath('/integracoes');
     revalidatePath('/', 'layout'); // revalidate layout to apply GA globally
     return { success: true, message: 'Configurações salvas com sucesso!', data };
+  } catch {
+    return { success: false, message: 'Erro de comunicação com o servidor.' };
+  }
+}
+
+export async function updateApifyIntegration(
+  companyId: string | undefined,
+  formData: FormData,
+): Promise<{ success: boolean; message: string; data?: IntegrationsData }> {
+  const apiKey = formData.get('apifyApiKey') as string | null;
+
+  if (!apiKey?.trim()) {
+    return { success: false, message: 'Informe a API Key do Apify.' };
+  }
+
+  try {
+    const url = companyId ? `/v1/integrations/apify?companyId=${companyId}` : `/v1/integrations/apify`;
+    const response = await apiClient(url, {
+      method: 'PATCH',
+      body: JSON.stringify({ config: { apiKey: apiKey.trim() } }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return { success: false, message: (err as { message?: string }).message ?? 'Erro ao salvar.' };
+    }
+
+    const data = await response.json();
+    revalidatePath('/integracoes');
+    return { success: true, message: 'API Key salva com sucesso!', data };
+  } catch {
+    return { success: false, message: 'Erro de comunicação com o servidor.' };
+  }
+}
+
+export async function testApifyConnection(companyId?: string): Promise<TestResult> {
+  try {
+    const url = companyId ? `/v1/integrations/apify/test?companyId=${companyId}` : `/v1/integrations/apify/test`;
+    const response = await apiClient(url, { method: 'POST' });
+    if (!response.ok) return { success: false, message: 'Erro ao testar conexão.' };
+    return response.json();
   } catch {
     return { success: false, message: 'Erro de comunicação com o servidor.' };
   }

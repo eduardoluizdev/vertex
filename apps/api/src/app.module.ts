@@ -18,6 +18,9 @@ import { NotificationsModule } from "./modules/notifications/notifications.modul
 import { CampaignsModule } from "./modules/campaigns/campaigns.module";
 import { WhatsappModule } from "./modules/whatsapp/whatsapp.module";
 import { ProposalsModule } from "./modules/proposals/proposals.module";
+import { LeadsModule } from "./modules/leads/leads.module";
+import { WhatsappTemplatesModule } from "./modules/whatsapp-templates/whatsapp-templates.module";
+import { BlogModule } from "./modules/blog/blog.module";
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { ProposalsModule } from "./modules/proposals/proposals.module";
     CampaignsModule,
     WhatsappModule,
     ProposalsModule,
+    LeadsModule,
+    WhatsappTemplatesModule,
+    BlogModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import { PrismaService } from '../../prisma.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { EasypanelService } from '../easypanel/easypanel.service';
@@ -33,6 +34,7 @@ export class ProposalsService {
     title: string,
     value: number,
     description: string,
+    successUrl?: string,
   ): Promise<{ url: string; id: string } | null> {
     const integration = await this.prisma.integrationConfig.findFirst({
       where: { provider: 'asaas', companyId },
@@ -58,6 +60,7 @@ export class ProposalsService {
           description,
           value,
           dueDateLimitDays: 10,
+          ...(successUrl && { callback: { successUrl, autoRedirect: true } }),
         }),
       });
 
@@ -84,6 +87,7 @@ export class ProposalsService {
     customerId: string,
     totalValue: number,
     description: string,
+    successUrl?: string,
   ): Promise<{ url: string; id: string } | null> {
     const integration = await this.prisma.integrationConfig.findFirst({
       where: { provider: 'abacatepay', companyId },
@@ -104,12 +108,19 @@ export class ProposalsService {
       return null;
     }
 
+    if (!customer.document) {
+      this.logger.warn(`AbacatePay requires taxId (CPF/CNPJ): customer ${customerId} has no document. Skipping billing link.`);
+      return null;
+    }
+
     // Get the proposal web URL for returnUrl/completionUrl
     const proposalIntegration = await this.prisma.integrationConfig.findFirst({
       where: { provider: PROPOSAL_PROVIDER, companyId },
     });
     const proposalCfg = (proposalIntegration?.config ?? {}) as Record<string, string>;
-    const webUrl = proposalCfg.webUrl || 'https://app.vertexhub.com.br';
+    const rawWebUrl = proposalCfg.webUrl || 'https://app.vertexhub.com.br';
+    const webUrl = rawWebUrl.startsWith('http') ? rawWebUrl : `https://${rawWebUrl}`;
+    const redirectUrl = successUrl || `${webUrl}/propostas`;
 
     const baseUrl = 'https://api.abacatepay.com/v1';
     const priceInCents = Math.round(totalValue * 100);
@@ -133,13 +144,13 @@ export class ProposalsService {
             quantity: 1,
             price: priceInCents,
           }],
-          returnUrl: `${webUrl}/propostas`,
-          completionUrl: `${webUrl}/propostas`,
+          returnUrl: redirectUrl,
+          completionUrl: redirectUrl,
           customer: {
             email: customer.email,
             name: customer.name,
+            taxId: customer.document,
             ...(customer.phone && { cellphone: customer.phone }),
-            ...(customer.document && { taxId: customer.document }),
           },
         }),
       });
@@ -169,6 +180,15 @@ export class ProposalsService {
     const number = await this.nextNumber(companyId);
     const items = dto.items ?? [];
     const totalValue = this.calcTotal(items);
+    const publicToken = randomUUID();
+
+    const proposalIntegration = await this.prisma.integrationConfig.findFirst({
+      where: { provider: PROPOSAL_PROVIDER, companyId },
+    });
+    const proposalCfg = (proposalIntegration?.config ?? {}) as Record<string, string>;
+    const rawWebUrl = proposalCfg.webUrl || 'https://app.vertexhub.com.br';
+    const webUrl = rawWebUrl.startsWith('http') ? rawWebUrl : `https://${rawWebUrl}`;
+    const successUrl = `${webUrl}/pagamento/sucesso?token=${publicToken}`;
 
     let asaasPaymentUrl: string | null = null;
     let asaasPaymentId: string | null = null;
@@ -180,12 +200,22 @@ export class ProposalsService {
     let abacatePayBrCodeBase64: string | null = null;
 
     if (totalValue > 0 && dto.paymentProvider && dto.paymentProvider !== 'none') {
+      if (dto.paymentProvider === 'abacatepay') {
+        const customer = await this.prisma.customer.findUnique({ where: { id: dto.customerId } });
+        if (!customer?.document) {
+          throw new BadRequestException(
+            'O cliente precisa ter CPF ou CNPJ cadastrado para gerar um link de pagamento via AbacatePay.',
+          );
+        }
+      }
+
       if (dto.paymentProvider === 'asaas') {
         const asaasResult = await this.generateAsaasPaymentLink(
           companyId,
           `Proposta #${number} - ${dto.title}`,
           totalValue,
           `Pagamento da proposta #${number}`,
+          successUrl,
         );
         if (asaasResult) {
           asaasPaymentId = asaasResult.id;
@@ -196,7 +226,8 @@ export class ProposalsService {
           companyId,
           dto.customerId,
           totalValue,
-          `Proposta #${number} - ${dto.title}`
+          `Proposta #${number} - ${dto.title}`,
+          successUrl,
         );
         if (billingResult) {
           abacatePayId = billingResult.id;
@@ -207,6 +238,7 @@ export class ProposalsService {
 
     const createdProposal = await this.prisma.proposal.create({
       data: {
+        publicToken,
         number,
         title: dto.title,
         status: (dto.status as any) ?? 'DRAFT',
@@ -344,6 +376,16 @@ export class ProposalsService {
       const targetValue = totalValue !== undefined ? totalValue : proposal.totalValue;
 
       if (targetValue > 0 && targetProvider !== 'none') {
+        if (targetProvider === 'abacatepay') {
+          const customerId = dto.customerId || proposal.customerId;
+          const customer = await this.prisma.customer.findUnique({ where: { id: customerId } });
+          if (!customer?.document) {
+            throw new BadRequestException(
+              'O cliente precisa ter CPF ou CNPJ cadastrado para gerar um link de pagamento via AbacatePay.',
+            );
+          }
+        }
+
         if (targetProvider === 'asaas') {
           const asaasResult = await this.generateAsaasPaymentLink(
             companyId,
@@ -617,15 +659,18 @@ export class ProposalsService {
       throw new Error('Cliente sem número de telefone');
     }
 
-    const tplRecord = await this.prisma.proposalWhatsappTemplate.findUnique({
-      where: { companyId },
-    });
-
     let template = '';
     if (isFollowUp) {
+      const tplRecord = await this.prisma.proposalWhatsappTemplate.findUnique({
+        where: { companyId },
+      });
       template = tplRecord?.followUpTemplate || 'Olá #CLIENTE#, tudo bem? Gostaria de saber se conseguiu avaliar nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Qualquer dúvida estou à disposição!';
     } else {
-      template = tplRecord?.template || 'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#';
+      const tplRecord = await this.prisma.whatsappTemplate.findFirst({
+        where: { companyId, category: 'PROPOSTA_CRIADA' as any },
+        orderBy: { createdAt: 'desc' },
+      });
+      template = tplRecord?.content || 'Olá #CLIENTE#, segue nossa proposta nº #PROPOSTA# no valor de R$ #VALOR#. Acesse: #LINK#';
     }
 
     const integration = await this.prisma.integrationConfig.findFirst({
@@ -678,11 +723,12 @@ export class ProposalsService {
       throw new Error('Cliente sem número de telefone');
     }
 
-    const tplRecord = await this.prisma.proposalWhatsappTemplate.findUnique({
-      where: { companyId },
+    const tplRecord = await this.prisma.whatsappTemplate.findFirst({
+      where: { companyId, category: 'PROPOSTA_ACEITA' as any },
+      orderBy: { createdAt: 'desc' },
     });
 
-    const template = tplRecord?.approvedTemplate ||
+    const template = tplRecord?.content ||
       'Olá #CLIENTE#! 🎉\n\nSua proposta nº #PROPOSTA# foi aprovada!\n\n💰 Valor: R$ #VALOR#\n\n📋 Dados para pagamento:\n#LINK_PAGAMENTO#\n\nObrigado pela confiança!\n#EMPRESA#';
 
     const integration = await this.prisma.integrationConfig.findFirst({

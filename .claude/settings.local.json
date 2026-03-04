@@ -18,7 +18,20 @@
       "Bash(PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"sim\" npx prisma:*)",
       "Bash(mkdir:*)",
       "Bash(DATABASE_URL=\"postgres://postgres:ff1c7412050a43673c04480f55d0ec35@cloud.vertexhub.dev:5432/vertex?sslmode=disable\" npx prisma:*)",
-      "Bash(psql:*)"
+      "Bash(psql:*)",
+      "Bash(node_modules/.bin/prisma migrate:*)",
+      "Bash(~/.nvm/versions/node/v22.22.0/bin/node:*)",
+      "Bash(ls:*)",
+      "mcp__ide__getDiagnostics",
+      "Bash(cat:*)",
+      "Bash(git checkout:*)",
+      "Bash(npm run:*)",
+      "Bash(pkill:*)",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "WebSearch",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ]
   }
 }

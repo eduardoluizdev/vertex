@@ -19,6 +19,9 @@ import {
   Mail,
   FileText,
   User,
+  Target,
+  MessageSquare,
+  BookOpen,
 } from "lucide-react";
 import {
   CompanySelector,
@@ -61,6 +64,7 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const { data: session } = useSession();
   const pathname = usePathname();
+  const isAdmin = session?.user?.role === 'ADMIN';
 
   const userName = session?.user?.name ?? "";
   const userImage = session?.user?.image ?? undefined;
@@ -189,9 +193,42 @@ export function AppSidebar({ companies, selectedCompanyId }: AppSidebarProps) {
                     collapsed={collapsed}
                   />
                 )}
+                {filterBySearch("Captura de Leads") && (
+                  <NavItem
+                    href={`/empresas/${selectedCompanyId}/captura-leads`}
+                    icon={Target}
+                    label="Captura de Leads"
+                    isActive={pathname?.includes("/captura-leads")}
+                    collapsed={collapsed}
+                  />
+                )}
+                {filterBySearch("Templates") && (
+                  <NavItem
+                    href={`/empresas/${selectedCompanyId}/templates`}
+                    icon={MessageSquare}
+                    label="Templates"
+                    isActive={pathname?.includes("/templates")}
+                    collapsed={collapsed}
+                  />
+                )}
               </>
             )}
           </NavSection>
+
+          {/* ADMIN Section */}
+          {isAdmin && (
+            <NavSection title="ADMIN" collapsed={collapsed}>
+              {filterBySearch("Blog") && (
+                <NavItem
+                  href="/blog-admin"
+                  icon={BookOpen}
+                  label="Blog"
+                  isActive={pathname?.startsWith("/blog-admin")}
+                  collapsed={collapsed}
+                />
+              )}
+            </NavSection>
+          )}
 
           {/* SUPORTE Section */}
           <NavSection title="SUPORTE" collapsed={collapsed}>

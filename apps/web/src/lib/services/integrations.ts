@@ -41,6 +41,13 @@ export interface IntegrationsData {
     clientSecret: string;
     isConfigured: boolean;
   };
+  apify?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    apiKey: string;
+    isConfigured: boolean;
+  };
 }
 
 export async function getIntegrationsServer(companyId?: string): Promise<IntegrationsData | null> {

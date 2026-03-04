@@ -8,6 +8,8 @@ export const ASAAS_PROVIDER = 'asaas';
 export const ABACATEPAY_PROVIDER = 'abacatepay';
 export const GOOGLE_ANALYTICS_PROVIDER = 'googleAnalytics';
 export const GITHUB_OAUTH_PROVIDER = 'githubOauth';
+export const APIFY_PROVIDER = 'apify';
+export const GEMINI_PROVIDER = 'gemini';
 
 /** Instancia o cliente Resend sempre com a região São Paulo (sa-east-1) */
 function createResendClient(apiKey: string): Resend {
@@ -42,6 +44,14 @@ interface GoogleAnalyticsConfig {
 interface GithubOauthConfig {
   clientId?: string;
   clientSecret?: string;
+}
+
+interface ApifyConfig {
+  apiKey?: string;
+}
+
+interface GeminiConfig {
+  apiKey?: string;
 }
 
 @Injectable()
@@ -124,6 +134,20 @@ export class IntegrationsService {
     const githubClientSecret = githubOauthCfg.clientSecret ?? '';
     const isGithubOauthConfigured = githubClientId.length > 5 && githubClientSecret.length > 5;
 
+    const apifyRow = await this.prisma.integrationConfig.findFirst({
+      where: { provider: APIFY_PROVIDER, companyId: companyId || null },
+    });
+    const apifyCfg = (apifyRow?.config ?? {}) as ApifyConfig;
+    const apifyApiKey = apifyCfg.apiKey ?? '';
+    const isApifyConfigured = apifyApiKey.startsWith('apify_api_') && apifyApiKey.length > 20;
+
+    const geminiRow = await this.prisma.integrationConfig.findFirst({
+      where: { provider: GEMINI_PROVIDER, companyId: null },
+    });
+    const geminiCfg = (geminiRow?.config ?? {}) as GeminiConfig;
+    const geminiApiKey = geminiCfg.apiKey ?? process.env.GEMINI_API_KEY ?? '';
+    const isGeminiConfigured = geminiApiKey.startsWith('AIza') && geminiApiKey.length > 20;
+
     return {
       resend: {
         name: row?.name ?? 'Resend',
@@ -165,7 +189,69 @@ export class IntegrationsService {
         clientSecret: this.maskKey(githubClientSecret), // Não expor o secret inteiro pro frontend
         isConfigured: isGithubOauthConfigured,
       } : undefined, // GitHub OAuth é apenas admin (global)
+      apify: {
+        name: apifyRow?.name ?? 'Apify',
+        provider: APIFY_PROVIDER,
+        enabled: apifyRow?.enabled ?? true,
+        apiKey: this.maskKey(apifyApiKey),
+        isConfigured: isApifyConfigured,
+      },
+      gemini: !companyId ? {
+        name: geminiRow?.name ?? 'Gemini AI',
+        provider: GEMINI_PROVIDER,
+        enabled: geminiRow?.enabled ?? true,
+        apiKey: this.maskKey(geminiApiKey),
+        isConfigured: isGeminiConfigured,
+      } : undefined,
     };
+  }
+
+  /**
+   * Returns the raw (unmasked) Apify API key for a given company.
+   * For internal use only — never expose to frontend.
+   */
+  async getApifyRawKey(companyId: string): Promise<string> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: APIFY_PROVIDER, companyId },
+    });
+    const cfg = (row?.config ?? {}) as ApifyConfig;
+    const apiKey = cfg.apiKey ?? '';
+    if (!apiKey || !apiKey.startsWith('apify_api_')) {
+      throw new BadRequestException(
+        'API Key do Apify não configurada. Configure em Integrações → Automações primeiro.',
+      );
+    }
+    return apiKey;
+  }
+
+  /**
+   * Tests the Apify connection by verifying the API key format and making a basic API call.
+   */
+  async testApifyConnection(companyId?: string): Promise<{ success: boolean; message: string }> {
+    const row = await this.prisma.integrationConfig.findFirst({
+      where: { provider: APIFY_PROVIDER, companyId: companyId || null },
+    });
+    const cfg = (row?.config ?? {}) as ApifyConfig;
+    const apiKey = cfg.apiKey ?? '';
+
+    if (!apiKey || !apiKey.startsWith('apify_api_')) {
+      return { success: false, message: 'API Key do Apify não configurada ou inválida.' };
+    }
+
+    try {
+      const response = await fetch('https://api.apify.com/v2/users/me', {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      });
+      if (!response.ok) {
+        return { success: false, message: 'Chave inválida. Verifique o token no painel do Apify.' };
+      }
+      const data = await response.json() as { data?: { username?: string } };
+      const username = data?.data?.username ?? '';
+      return { success: true, message: `Conectado como ${username}` };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Erro desconhecido';
+      return { success: false, message: `Erro ao conectar: ${message}` };
+    }
   }
 
   /**

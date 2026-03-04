@@ -81,6 +81,9 @@ export class IntegrationsController {
     if (provider === 'abacatepay') {
       return this.integrationsService.testAbacatePayConnection(companyId);
     }
+    if (provider === 'apify') {
+      return this.integrationsService.testApifyConnection(companyId);
+    }
     return { success: false, message: `Teste não implementado para "${provider}".` };
   }
 

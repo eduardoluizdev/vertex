@@ -8,18 +8,15 @@ import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { fetchClient } from '@/lib/fetch-client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetTrigger } from '@/components/ui/sheet';
-import { WhatsappTemplateForm } from '@/app/(dashboard)/propostas/_components/whatsapp-template-form';
 
 interface WhatsappCardProps {
   companyId: string;
   initialStatus: string;
   qrcode: string | null;
   instanceName: string | null;
-  initialTemplate?: string;
-  initialFollowUpTemplate?: string;
 }
 
-export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, instanceName: initialInstanceName, initialTemplate, initialFollowUpTemplate }: WhatsappCardProps) {
+export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, instanceName: initialInstanceName }: WhatsappCardProps) {
   const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [status, setStatus] = useState(initialStatus);
@@ -354,21 +351,7 @@ export function WhatsappCard({ companyId, initialStatus, qrcode: initialQrcode, 
             )}
           </div>
 
-          {/* Section 2: Templates */}
-          {status !== 'DISCONNECTED' && (
-            <div className="rounded-2xl border border-border bg-card overflow-hidden">
-               <div className="p-5 bg-muted/10 border-b border-border/50">
-                  <h3 className="text-base font-semibold text-foreground">Templates de Disparo</h3>
-                  <p className="text-sm text-muted-foreground mt-1 tracking-tight">Configure o conteúdo das mensagens enviadas com suas Propostas.</p>
-               </div>
-               <div className="p-6">
-                 <WhatsappTemplateForm 
-                   initialTemplate={initialTemplate} 
-                   initialFollowUpTemplate={initialFollowUpTemplate} 
-                 />
-               </div>
-            </div>
-          )}
+
         </div>
       </SheetContent>
     </Sheet>
