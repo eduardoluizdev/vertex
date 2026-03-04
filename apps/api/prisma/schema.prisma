@@ -69,6 +69,7 @@ model User {
   customers            Customer[]
   passwordResetTokens  PasswordResetToken[]
   companies            UserCompany[]
+  blogPosts            BlogPost[]
 }
 
 model PasswordResetToken {
@@ -109,6 +110,8 @@ model Company {
   proposals Proposal[]
   proposalWhatsappTemplate ProposalWhatsappTemplate?
   users UserCompany[]
+  leadLists LeadList[]
+  whatsappTemplates WhatsappTemplate[]
 }
 
 model Customer {
@@ -295,6 +298,107 @@ model ProposalWhatsappTemplate {
   updatedAt        DateTime @updatedAt
 
   @@map("proposal_whatsapp_templates")
+}
+
+enum LeadKanbanStage {
+  NOVO
+  CONTATO_INICIAL
+  INTERESSADO
+  PROPOSTA_ENVIADA
+  EM_NEGOCIACAO
+  CLIENTE
+  PERDIDO
+}
+
+enum LeadListStatus {
+  PROCESSANDO
+  CONCLUIDO
+  FALHA
+}
+
+enum WhatsappTemplateCategory {
+  LEAD
+  PROPOSTA
+  CAMPANHA
+}
+
+model LeadList {
+  id         String        @id @default(uuid())
+  name       String
+  nicho      String
+  cidade     String
+  estado     String
+  pais       String
+  quantidade Int
+  status     LeadListStatus @default(PROCESSANDO)
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  companyId  String
+  company    Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  leads      Lead[]
+
+  @@map("lead_lists")
+}
+
+model Lead {
+  id          String          @id @default(uuid())
+  stage       LeadKanbanStage @default(NOVO)
+  name        String?
+  phone       String?
+  email       String?
+  website     String?
+  address     String?
+  rating      Float?
+  reviewCount Int?
+  category    String?
+  rawData     Json
+
+  leadListId  String
+  leadList    LeadList        @relation(fields: [leadListId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  @@map("leads")
+}
+
+model WhatsappTemplate {
+  id        String                   @id @default(uuid())
+  name      String
+  content   String                   @db.Text
+  category  WhatsappTemplateCategory
+  createdAt DateTime                 @default(now())
+  updatedAt DateTime                 @updatedAt
+
+  companyId String
+  company   Company                  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("whatsapp_templates")
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model BlogPost {
+  id          String     @id @default(uuid())
+  headline    String
+  slug        String     @unique
+  content     String     @db.Text
+  excerpt     String?
+  coverImage  String?
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id])
+
+  @@map("blog_posts")
 }
 
 model UserCompany {
