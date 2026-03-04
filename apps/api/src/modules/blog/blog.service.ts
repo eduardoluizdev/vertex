@@ -247,19 +247,37 @@ abstract or conceptual visuals. No text overlay needed. High quality, 16:9 aspec
   async findBySlug(slug: string) {
     const post = await this.prisma.blogPost.findUnique({
       where: { slug },
-      include: { author: { select: { id: true, name: true } } },
+      include: {
+        author: { select: { id: true, name: true } },
+        _count: { select: { views: true } },
+      },
     });
     if (!post) throw new NotFoundException('Post não encontrado.');
-    return post;
+    const { _count, ...rest } = post;
+    return { ...rest, viewCount: _count.views };
   }
 
   async findById(id: string) {
     const post = await this.prisma.blogPost.findUnique({
       where: { id },
-      include: { author: { select: { id: true, name: true } } },
+      include: {
+        author: { select: { id: true, name: true } },
+        _count: { select: { views: true } },
+      },
     });
     if (!post) throw new NotFoundException('Post não encontrado.');
-    return post;
+    const { _count, ...rest } = post;
+    return { ...rest, viewCount: _count.views };
+  }
+
+  async registerView(postId: string, ip: string): Promise<{ viewCount: number }> {
+    await this.prisma.blogPostView.upsert({
+      where: { postId_ip: { postId, ip } },
+      create: { postId, ip },
+      update: {}, // já existe, não faz nada
+    });
+    const viewCount = await this.prisma.blogPostView.count({ where: { postId } });
+    return { viewCount };
   }
 
   async update(id: string, dto: UpdatePostDto) {

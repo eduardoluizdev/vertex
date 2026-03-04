@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Calendar, User, ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
 import { marked } from 'marked';
+import { ViewTracker } from './_components/view-tracker';
 
 const API_URL = process.env.API_URL || 'https://api.vertexhub.dev';
 
@@ -17,6 +18,7 @@ interface BlogPost {
   publishedAt: string | null;
   createdAt: string;
   author: { name: string };
+  viewCount: number;
 }
 
 async function getPost(slug: string): Promise<BlogPost | null> {
@@ -123,7 +125,7 @@ export default async function BlogPostPage({ params }: Props) {
             <h1 className="text-3xl md:text-5xl font-bold tracking-tight leading-tight text-white mb-4">
               {post.headline}
             </h1>
-            <div className="flex items-center gap-4 text-sm text-white/60">
+            <div className="flex flex-wrap items-center gap-4 text-sm text-white/60">
               <span className="flex items-center gap-1.5">
                 <User className="size-4" />
                 {post.author.name}
@@ -138,6 +140,7 @@ export default async function BlogPostPage({ params }: Props) {
                   })}
                 </span>
               )}
+              <ViewTracker postId={post.id} initialViews={post.viewCount ?? 0} />
             </div>
           </div>
         </div>
@@ -153,7 +156,7 @@ export default async function BlogPostPage({ params }: Props) {
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight leading-tight mb-4">
             {post.headline}
           </h1>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-10">
+          <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-10">
             <span className="flex items-center gap-1.5">
               <User className="size-4" />
               {post.author.name}
@@ -168,6 +171,7 @@ export default async function BlogPostPage({ params }: Props) {
                 })}
               </span>
             )}
+            <ViewTracker postId={post.id} initialViews={post.viewCount ?? 0} />
           </div>
         </div>
       )}

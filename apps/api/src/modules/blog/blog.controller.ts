@@ -12,6 +12,7 @@ import {
   HttpCode,
   HttpStatus,
   ForbiddenException,
+  Ip,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags, ApiOperation } from '@nestjs/swagger';
 import { BlogService } from './blog.service';
@@ -54,6 +55,14 @@ export class BlogController {
   findAllAdmin(@Request() req: any) {
     if (req.user.role !== 'ADMIN') throw new ForbiddenException();
     return this.blogService.findAll(false);
+  }
+
+  @Post(':id/view')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Register a post view by IP (public)' })
+  registerView(@Param('id') id: string, @Ip() ip: string, @Request() req: any) {
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0]?.trim() ?? ip;
+    return this.blogService.registerView(id, clientIp);
   }
 
   @Get(':id')

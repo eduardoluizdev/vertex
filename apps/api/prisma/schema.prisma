@@ -397,8 +397,21 @@ model BlogPost {
 
   authorId    String
   author      User       @relation(fields: [authorId], references: [id])
+  views       BlogPostView[]
 
   @@map("blog_posts")
+}
+
+model BlogPostView {
+  id        String   @id @default(uuid())
+  postId    String
+  ip        String
+  viewedAt  DateTime @default(now())
+
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, ip])
+  @@map("blog_post_views")
 }
 
 model UserCompany {
