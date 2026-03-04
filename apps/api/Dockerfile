@@ -23,7 +23,7 @@ WORKDIR /app
 RUN npm run build -- --filter=@vertexhub/api
 
 # Production stage
-FROM node:20-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
