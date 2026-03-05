@@ -450,6 +450,12 @@ export function LandingContent({ recentPosts = [] }: { recentPosts?: RecentPost[
             <Link href="/login" className="transition-colors hover:text-white">Fazer Login</Link>
             <Link href="/register" className="transition-colors hover:text-white">Criar Nova Conta</Link>
           </div>
+
+          <div className="flex flex-col gap-3 items-center lg:items-start">
+            <span className="text-neutral-500 uppercase text-xs font-semibold tracking-wider mb-1">Legal</span>
+            <Link href="/termos" className="transition-colors hover:text-white">Termos de Uso</Link>
+            <Link href="/privacidade" className="transition-colors hover:text-white">Política de Privacidade</Link>
+          </div>
         </div>
       </footer>
     </div>
