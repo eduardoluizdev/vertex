@@ -4,6 +4,7 @@ import { Calendar, User, ArrowLeft } from 'lucide-react';
 import type { Metadata } from 'next';
 import { marked } from 'marked';
 import { ViewTracker } from './_components/view-tracker';
+import { WhatsappFloat } from '@/components/whatsapp-float';
 
 const API_URL = process.env.API_URL || 'https://api.vertexhub.dev';
 
@@ -175,6 +176,8 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </div>
       )}
+
+      <WhatsappFloat />
 
       <article className="max-w-3xl mx-auto px-4 py-12">
         {post.excerpt && (

@@ -5,6 +5,7 @@ import { AuthSessionProvider } from '@/components/providers/session-provider';
 import { ThemeProvider } from '@/components/providers/theme-provider';
 import { getPublicGoogleAnalyticsServer } from '@/lib/services/integrations';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { CookieConsent } from '@/components/cookie-consent';
 
 export const metadata: Metadata = {
   title: 'VertexHub',
@@ -35,6 +36,7 @@ export default async function RootLayout({
           disableTransitionOnChange
         >
           <AuthSessionProvider>{children}</AuthSessionProvider>
+          <CookieConsent />
           <Toaster richColors position="top-right" />
         </ThemeProvider>
         {gaEnabled && gaId && gaId.startsWith('G-') && (

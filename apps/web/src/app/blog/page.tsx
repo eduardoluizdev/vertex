@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Calendar, ArrowRight } from 'lucide-react';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
+import { WhatsappFloat } from '@/components/whatsapp-float';
 
 const API_URL = process.env.API_URL || 'https://api.vertexhub.dev';
 
@@ -183,6 +184,8 @@ export default async function BlogPage() {
       <footer className="border-t border-white/5 py-8 text-center text-xs text-neutral-600">
         © {new Date().getFullYear()} VertexHub — Todos os direitos reservados.
       </footer>
+
+      <WhatsappFloat />
     </div>
   );
 }

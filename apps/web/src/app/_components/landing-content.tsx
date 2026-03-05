@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { VertexHubLogo } from '@/components/vertexhub-logo';
+import { WhatsappFloat } from '@/components/whatsapp-float';
 import { useState } from 'react';
 
 interface RecentPost {
@@ -431,6 +432,8 @@ export function LandingContent({ recentPosts = [] }: { recentPosts?: RecentPost[
         </section>
       </main>
 
+      <WhatsappFloat />
+
       {/* Footer */}
       <footer className="border-t border-white/5 bg-[#0A0A0A] py-14 text-neutral-400">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-10 px-4 text-sm lg:flex-row lg:px-6">
@@ -443,6 +446,17 @@ export function LandingContent({ recentPosts = [] }: { recentPosts?: RecentPost[
               SaaS de gestão empresarial inteligente focada para devs freelances e agências digitais.
             </span>
             <span className="text-xs text-neutral-500">Copyright © {new Date().getFullYear()} - Todos os direitos reservados.</span>
+            <span className="text-xs text-neutral-600">
+              Desenvolvido com ❤️ por{' '}
+              <a
+                href="https://www.linkedin.com/in/eduardoluizdev/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-neutral-500 hover:text-white transition-colors underline underline-offset-2"
+              >
+                Eduardo Luiz
+              </a>
+            </span>
           </div>
           
           <div className="flex flex-col gap-3 lg:ml-auto items-center lg:items-start">
