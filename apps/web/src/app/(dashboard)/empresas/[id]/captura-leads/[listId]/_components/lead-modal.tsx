@@ -7,6 +7,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import {
   Phone,
@@ -19,12 +29,15 @@ import {
   Users,
   Send,
   ChevronRight,
+  Trash2,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Lead, LeadKanbanStage } from '@/actions/lead-lists';
+import { deleteLead } from '@/actions/lead-lists';
 import {
   getWhatsappTemplates,
   sendLeadWhatsapp,
+  getCompanyName,
   type WhatsappTemplate,
 } from '@/actions/whatsapp-templates';
 
@@ -53,6 +66,7 @@ interface LeadModalProps {
   companyId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeleted?: (leadId: string) => void;
 }
 
 function InfoRow({
@@ -92,13 +106,14 @@ function InfoRow({
   );
 }
 
-function replaceVariables(content: string, lead: Lead): string {
+function replaceVariables(content: string, lead: Lead, companyName: string): string {
   return content
     .replace(/#NOME#/g, lead.name ?? '')
     .replace(/#TELEFONE#/g, lead.phone ?? '')
     .replace(/#EMAIL#/g, lead.email ?? '')
     .replace(/#ENDERECO#/g, lead.address ?? '')
-    .replace(/#NICHO#/g, lead.category ?? '');
+    .replace(/#NICHO#/g, lead.category ?? '')
+    .replace(/#EMPRESA#/g, companyName);
 }
 
 interface SendWhatsappDialogProps {
@@ -111,11 +126,13 @@ interface SendWhatsappDialogProps {
 function SendWhatsappDialog({ lead, companyId, open, onOpenChange }: SendWhatsappDialogProps) {
   const [templates, setTemplates] = useState<WhatsappTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<WhatsappTemplate | null>(null);
+  const [companyName, setCompanyName] = useState('');
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (open) {
       getWhatsappTemplates(companyId, 'LEAD').then(setTemplates);
+      getCompanyName(companyId).then(setCompanyName);
       setSelectedTemplate(null);
     }
   }, [open, companyId]);
@@ -138,7 +155,7 @@ function SendWhatsappDialog({ lead, companyId, open, onOpenChange }: SendWhatsap
     });
   }
 
-  const preview = selectedTemplate ? replaceVariables(selectedTemplate.content, lead) : null;
+  const preview = selectedTemplate ? replaceVariables(selectedTemplate.content, lead, companyName) : null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -205,8 +222,25 @@ function SendWhatsappDialog({ lead, companyId, open, onOpenChange }: SendWhatsap
   );
 }
 
-export function LeadModal({ lead, companyId, open, onOpenChange }: LeadModalProps) {
+export function LeadModal({ lead, companyId, open, onOpenChange, onDeleted }: LeadModalProps) {
   const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
+
+  function handleDelete() {
+    if (!lead) return;
+    startDeleteTransition(async () => {
+      try {
+        await deleteLead(companyId, lead.id);
+        toast.success('Lead excluído com sucesso.');
+        setConfirmDeleteOpen(false);
+        onOpenChange(false);
+        onDeleted?.(lead.id);
+      } catch {
+        toast.error('Erro ao excluir lead. Tente novamente.');
+      }
+    });
+  }
 
   if (!lead) return null;
 
@@ -214,7 +248,8 @@ export function LeadModal({ lead, companyId, open, onOpenChange }: LeadModalProp
   const reviewCount = lead.reviewCount ?? (rawData['reviewsCount'] as number) ?? null;
   const mapsUrl = (rawData['url'] as string) ?? (rawData['googleMapsUrl'] as string) ?? null;
 
-  const whatsappPhone = lead.phone?.replace(/\D/g, '');
+  const rawPhone = lead.phone?.replace(/\D/g, '');
+  const whatsappPhone = rawPhone && rawPhone.length <= 11 ? `55${rawPhone}` : rawPhone;
   const whatsappUrl = whatsappPhone ? `https://wa.me/${whatsappPhone}` : null;
 
   return (
@@ -323,9 +358,39 @@ export function LeadModal({ lead, companyId, open, onOpenChange }: LeadModalProp
                 Ver no Google Maps
               </a>
             )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 hover:text-destructive"
+              onClick={() => setConfirmDeleteOpen(true)}
+            >
+              <Trash2 className="size-4" />
+              Excluir
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir lead?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação não pode ser desfeita. O lead <strong>{lead.name ?? 'sem nome'}</strong> será removido permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <SendWhatsappDialog
         lead={lead}

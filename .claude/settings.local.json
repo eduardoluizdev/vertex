@@ -31,7 +31,12 @@
       "Bash(curl:*)",
       "WebSearch",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(apt list:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(node:*)"
     ]
   }
 }

@@ -11,14 +11,16 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { updateGeminiIntegration } from '@/actions/blog-actions';
+import { updateGeminiIntegration as updateGeminiGlobal } from '@/actions/blog-actions';
+import { updateGeminiIntegration as updateGeminiCompany } from '../_actions/integrations-actions';
 
 interface GeminiCardProps {
   initialApiKey: string;
   isConfigured: boolean;
+  companyId?: string;
 }
 
-export function GeminiCard({ initialApiKey, isConfigured }: GeminiCardProps) {
+export function GeminiCard({ initialApiKey, isConfigured, companyId }: GeminiCardProps) {
   const [showKey, setShowKey] = useState(false);
   const [apiKey, setApiKey] = useState(initialApiKey || '');
   const [configured, setConfigured] = useState(isConfigured);
@@ -30,7 +32,9 @@ export function GeminiCard({ initialApiKey, isConfigured }: GeminiCardProps) {
     setResult(null);
     const formData = new FormData(e.currentTarget);
     startSave(async () => {
-      const res = await updateGeminiIntegration(formData);
+      const res = companyId
+        ? await updateGeminiCompany(companyId, formData)
+        : await updateGeminiGlobal(formData);
       setResult(res);
       if (res.success) setConfigured(true);
     });

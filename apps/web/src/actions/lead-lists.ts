@@ -111,6 +111,32 @@ export async function updateLeadStage(
   );
 }
 
+export async function addLead(
+  companyId: string,
+  listId: string,
+  data: {
+    name?: string;
+    phone?: string;
+    email?: string;
+    website?: string;
+    address?: string;
+    category?: string;
+  },
+): Promise<Lead> {
+  const response = await apiClient(
+    `/v1/companies/${companyId}/lead-lists/${listId}/leads`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    },
+  );
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
+  return response.json();
+}
+
 export async function deleteLeadList(
   companyId: string,
   listId: string,
@@ -118,4 +144,18 @@ export async function deleteLeadList(
   await apiClient(`/v1/companies/${companyId}/lead-lists/${listId}`, {
     method: 'DELETE',
   });
+}
+
+export async function deleteLead(
+  companyId: string,
+  leadId: string,
+): Promise<void> {
+  const response = await apiClient(
+    `/v1/companies/${companyId}/lead-lists/leads/${leadId}`,
+    { method: 'DELETE' },
+  );
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(error);
+  }
 }

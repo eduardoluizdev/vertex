@@ -13,6 +13,7 @@ import {
 import { ApiBearerAuth, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { LeadsService } from './leads.service';
 import { CreateLeadListDto } from './dto/create-lead-list.dto';
+import { CreateLeadDto } from './dto/create-lead.dto';
 import { UpdateLeadStageDto } from './dto/update-lead-stage.dto';
 import { SendLeadWhatsappDto } from './dto/send-lead-whatsapp.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -51,6 +52,18 @@ export class LeadsController {
     return this.leadsService.findOne(companyId, id);
   }
 
+  @Post(':listId/leads')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiResponse({ status: HttpStatus.CREATED, description: 'Lead added to list' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Lead list not found' })
+  addLead(
+    @Param('companyId') companyId: string,
+    @Param('listId') listId: string,
+    @Body() dto: CreateLeadDto,
+  ) {
+    return this.leadsService.addLead(companyId, listId, dto);
+  }
+
   @Patch('leads/:leadId/stage')
   @ApiResponse({ status: HttpStatus.OK, description: 'Lead stage updated' })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Lead not found' })
@@ -71,6 +84,17 @@ export class LeadsController {
     @Param('id') id: string,
   ) {
     return this.leadsService.remove(companyId, id);
+  }
+
+  @Delete('leads/:leadId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiResponse({ status: HttpStatus.NO_CONTENT, description: 'Lead deleted' })
+  @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Lead not found' })
+  removeLead(
+    @Param('companyId') companyId: string,
+    @Param('leadId') leadId: string,
+  ) {
+    return this.leadsService.deleteLead(companyId, leadId);
   }
 
   @Post('leads/:leadId/send-whatsapp')

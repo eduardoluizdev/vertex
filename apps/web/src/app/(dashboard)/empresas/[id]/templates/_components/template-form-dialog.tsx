@@ -19,10 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   createWhatsappTemplate,
   updateWhatsappTemplate,
+  generateWhatsappTemplateContent,
   type WhatsappTemplate,
   type WhatsappTemplateCategory,
 } from '@/actions/whatsapp-templates';
@@ -35,7 +37,7 @@ const CATEGORY_LABELS: Record<WhatsappTemplateCategory, string> = {
 };
 
 const CATEGORY_VARIABLES: Record<WhatsappTemplateCategory, string[]> = {
-  LEAD: ['#NOME#', '#TELEFONE#', '#EMAIL#', '#ENDERECO#', '#NICHO#'],
+  LEAD: ['#NOME#', '#TELEFONE#', '#EMAIL#', '#ENDERECO#', '#NICHO#', '#EMPRESA#'],
   PROPOSTA_CRIADA: ['#PROPOSTA#', '#CLIENTE#', '#VALOR#', '#LINK#', '#LINK_PAGAMENTO#', '#EMPRESA#'],
   PROPOSTA_ACEITA: ['#PROPOSTA#', '#CLIENTE#', '#VALOR#', '#LINK#', '#LINK_PAGAMENTO#', '#EMPRESA#'],
   CAMPANHA: ['#NOME#', '#EMPRESA#'],
@@ -57,17 +59,20 @@ export function TemplateFormDialog({
   onSuccess,
 }: TemplateFormDialogProps) {
   const [isPending, startTransition] = useTransition();
+  const [isGenerating, setIsGenerating] = useState(false);
   const [name, setName] = useState(template?.name ?? '');
   const [category, setCategory] = useState<WhatsappTemplateCategory>(
     template?.category ?? 'PROPOSTA_CRIADA',
   );
   const [content, setContent] = useState(template?.content ?? '');
+  const [aiContext, setAiContext] = useState('');
 
   useEffect(() => {
     if (open) {
       setName(template?.name ?? '');
       setCategory(template?.category ?? 'PROPOSTA_CRIADA');
       setContent(template?.content ?? '');
+      setAiContext('');
     }
   }, [open, template]);
 
@@ -75,6 +80,23 @@ export function TemplateFormDialog({
 
   function insertVariable(variable: string) {
     setContent((prev) => prev + variable);
+  }
+
+  async function handleGenerate() {
+    if (!name.trim()) {
+      toast.error('Preencha o nome do template antes de gerar com IA.');
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const result = await generateWhatsappTemplateContent(companyId, { name, category, context: aiContext || undefined });
+      setContent(result.content);
+      toast.success('Conteúdo gerado com sucesso!');
+    } catch {
+      toast.error('Erro ao gerar conteúdo com Gemini.');
+    } finally {
+      setIsGenerating(false);
+    }
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -151,7 +173,35 @@ export function TemplateFormDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content">Conteúdo</Label>
+            <Label htmlFor="ai-context">Contexto para IA (opcional)</Label>
+            <Textarea
+              id="ai-context"
+              value={aiContext}
+              onChange={(e) => setAiContext(e.target.value)}
+              placeholder="Ex: somos uma agência de marketing digital, tom descontraído, foco em conversão..."
+              className="min-h-16 resize-none text-sm"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="content">Conteúdo</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleGenerate}
+                disabled={isGenerating || isPending}
+                className="h-7 gap-1.5 text-xs"
+              >
+                {isGenerating ? (
+                  <Loader2 className="size-3 animate-spin" />
+                ) : (
+                  <Sparkles className="size-3" />
+                )}
+                {isGenerating ? 'Gerando...' : 'Gerar com Gemini'}
+              </Button>
+            </div>
             <Textarea
               id="content"
               value={content}

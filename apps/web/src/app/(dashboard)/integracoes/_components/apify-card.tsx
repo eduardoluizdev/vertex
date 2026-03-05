@@ -115,6 +115,29 @@ export function ApifyCard({ initialApiKey, isConfigured, companyId }: ApifyCardP
         </SheetHeader>
 
         <div className="p-6 flex-1 overflow-y-auto space-y-6">
+          {/* Tutorial */}
+          <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Target className="size-4 text-orange-400 shrink-0" />
+              <p className="text-sm font-medium text-orange-400">Como usar o Google Maps Scraper</p>
+            </div>
+            <ol className="space-y-2 text-xs text-muted-foreground list-decimal list-inside">
+              <li>Acesse o actor do Google Maps Scraper no Apify</li>
+              <li>Configure os filtros: cidade, nicho, raio de busca etc.</li>
+              <li>Execute o scraper e aguarde os resultados</li>
+              <li>Os leads capturados aparecerão automaticamente na sua lista</li>
+            </ol>
+            <a
+              href="https://console.apify.com/actors/nwua9Gu5YrADL7ZDj/runs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-orange-400 hover:text-orange-300 transition-colors mt-1"
+            >
+              <ExternalLink className="size-3.5" />
+              Abrir Google Maps Scraper no Apify
+            </a>
+          </div>
+
           <div className="rounded-2xl border border-border bg-card overflow-hidden">
             <div className="p-5 bg-muted/10 border-b border-border/50 flex items-center gap-3">
               <div className="flex size-8 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500">

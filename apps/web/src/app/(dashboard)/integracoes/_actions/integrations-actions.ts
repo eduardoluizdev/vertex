@@ -44,6 +44,13 @@ export interface IntegrationsData {
     apiKey: string;
     isConfigured: boolean;
   };
+  gemini?: {
+    name: string;
+    provider: string;
+    enabled: boolean;
+    apiKey: string;
+    isConfigured: boolean;
+  };
 }
 
 export interface TestResult {
@@ -351,6 +358,34 @@ export async function testApifyConnection(companyId?: string): Promise<TestResul
     const response = await apiClient(url, { method: 'POST' });
     if (!response.ok) return { success: false, message: 'Erro ao testar conexão.' };
     return response.json();
+  } catch {
+    return { success: false, message: 'Erro de comunicação com o servidor.' };
+  }
+}
+
+export async function updateGeminiIntegration(
+  companyId: string | undefined,
+  formData: FormData,
+): Promise<{ success: boolean; message: string }> {
+  const apiKey = formData.get('geminiApiKey') as string | null;
+  if (!apiKey?.trim()) {
+    return { success: false, message: 'Informe a API Key do Gemini.' };
+  }
+
+  try {
+    const url = companyId ? `/v1/integrations/gemini?companyId=${companyId}` : `/v1/integrations/gemini`;
+    const response = await apiClient(url, {
+      method: 'PATCH',
+      body: JSON.stringify({ config: { apiKey: apiKey.trim() } }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return { success: false, message: (err as { message?: string }).message ?? 'Erro ao salvar.' };
+    }
+
+    revalidatePath('/integracoes');
+    return { success: true, message: 'API Key do Gemini salva com sucesso!' };
   } catch {
     return { success: false, message: 'Erro de comunicação com o servidor.' };
   }

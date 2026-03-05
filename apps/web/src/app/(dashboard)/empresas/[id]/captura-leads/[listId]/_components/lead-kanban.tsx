@@ -19,6 +19,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { fetchClient } from '@/lib/fetch-client';
 import { LeadCard } from './lead-card';
+import { AddLeadDialog } from './add-lead-dialog';
 import type { Lead, LeadKanbanStage, LeadListWithLeads } from '@/actions/lead-lists';
 
 const STAGES: { id: LeadKanbanStage; label: string; color: string }[] = [
@@ -35,9 +36,10 @@ interface KanbanColumnProps {
   stage: (typeof STAGES)[number];
   leads: Lead[];
   companyId: string;
+  onLeadDeleted: (leadId: string) => void;
 }
 
-function KanbanColumn({ stage, leads, companyId }: KanbanColumnProps) {
+function KanbanColumn({ stage, leads, companyId, onLeadDeleted }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
 
   return (
@@ -57,7 +59,7 @@ function KanbanColumn({ stage, leads, companyId }: KanbanColumnProps) {
       >
         <SortableContext items={leads.map((l) => l.id)} strategy={verticalListSortingStrategy}>
           {leads.map((lead) => (
-            <LeadCard key={lead.id} lead={lead} companyId={companyId} />
+            <LeadCard key={lead.id} lead={lead} companyId={companyId} onDeleted={onLeadDeleted} />
           ))}
         </SortableContext>
         {leads.length === 0 && (
@@ -157,8 +159,23 @@ export function LeadKanban({ leadList, companyId }: LeadKanbanProps) {
     }
   }
 
+  function handleLeadAdded(lead: Lead) {
+    setLeads((prev) => [...prev, lead]);
+  }
+
+  function handleLeadDeleted(leadId: string) {
+    setLeads((prev) => prev.filter((l) => l.id !== leadId));
+  }
+
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        <AddLeadDialog
+          companyId={companyId}
+          listId={leadList.id}
+          onLeadAdded={handleLeadAdded}
+        />
+      </div>
       {isPolling && (
         <div className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-950 dark:text-yellow-200">
           <Loader2 className="size-4 animate-spin" />
@@ -179,6 +196,7 @@ export function LeadKanban({ leadList, companyId }: LeadKanbanProps) {
                 stage={stage}
                 leads={getLeadsForStage(stage.id)}
                 companyId={companyId}
+                onLeadDeleted={handleLeadDeleted}
               />
             ))}
           </div>

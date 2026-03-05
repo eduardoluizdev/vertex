@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/auth';
-import { Plug2, Mail, MessageSquare, Globe, Zap } from 'lucide-react';
+import { Plug2, Mail, MessageSquare, Globe, Zap, Sparkles } from 'lucide-react';
 import { getIntegrationsServer } from '@/lib/services/integrations';
 import { ResendCard } from './_components/resend-card';
 import { GoogleAnalyticsCard } from './_components/google-analytics-card';
@@ -213,6 +213,33 @@ export default async function IntegracoesPage() {
                 <ApifyCard
                   initialApiKey={companyIntegrations.apify?.apiKey ?? ''}
                   isConfigured={companyIntegrations.apify?.isConfigured ?? false}
+                  companyId={selectedCompanyId}
+                />
+              )}
+            </div>
+          </section>
+
+          {/* IA */}
+          <section className="space-y-6">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <div className="flex size-8 items-center justify-center rounded-lg bg-vibe-surface border border-vibe-muted/10">
+                  <Sparkles className="size-4 text-vibe-primary" />
+                </div>
+                <h2 className="text-lg font-semibold text-foreground">
+                  Inteligência Artificial
+                </h2>
+              </div>
+              <p className="text-sm text-muted-foreground ml-10">
+                Modelos de IA para geração de conteúdo e automações.
+              </p>
+            </div>
+
+            <div className="pl-0 md:pl-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {companyIntegrations && (
+                <GeminiCard
+                  initialApiKey={companyIntegrations.gemini?.apiKey ?? ''}
+                  isConfigured={companyIntegrations.gemini?.isConfigured ?? false}
                   companyId={selectedCompanyId}
                 />
               )}

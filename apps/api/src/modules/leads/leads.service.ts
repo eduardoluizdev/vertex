@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma.service';
 import { ApifyService } from './apify.service';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
 import { CreateLeadListDto } from './dto/create-lead-list.dto';
+import { CreateLeadDto } from './dto/create-lead.dto';
 import { LeadKanbanStage } from './dto/update-lead-stage.dto';
 
 @Injectable()
@@ -105,6 +106,29 @@ export class LeadsService {
     return leadList;
   }
 
+  async addLead(companyId: string, listId: string, dto: CreateLeadDto) {
+    const leadList = await this.prisma.leadList.findFirst({
+      where: { id: listId, companyId },
+    });
+
+    if (!leadList) {
+      throw new NotFoundException('Lead list not found');
+    }
+
+    return this.prisma.lead.create({
+      data: {
+        leadListId: listId,
+        name: dto.name ?? null,
+        phone: dto.phone ?? null,
+        email: dto.email ?? null,
+        website: dto.website ?? null,
+        address: dto.address ?? null,
+        category: dto.category ?? null,
+        rawData: {},
+      },
+    });
+  }
+
   async updateLeadStage(companyId: string, leadId: string, stage: LeadKanbanStage) {
     const lead = await this.prisma.lead.findFirst({
       where: {
@@ -128,6 +152,18 @@ export class LeadsService {
     await this.prisma.leadList.delete({ where: { id } });
   }
 
+  async deleteLead(companyId: string, leadId: string) {
+    const lead = await this.prisma.lead.findFirst({
+      where: { id: leadId, leadList: { companyId } },
+    });
+
+    if (!lead) {
+      throw new NotFoundException('Lead not found');
+    }
+
+    await this.prisma.lead.delete({ where: { id: leadId } });
+  }
+
   async sendLeadWhatsapp(companyId: string, leadId: string, templateId: string) {
     const lead = await this.prisma.lead.findFirst({
       where: { id: leadId, leadList: { companyId } },
@@ -145,14 +181,27 @@ export class LeadsService {
       throw new NotFoundException('Template not found');
     }
 
+    const company = await this.prisma.company.findUnique({
+      where: { id: companyId },
+      select: { name: true },
+    });
+
     const message = template.content
       .replace(/#NOME#/g, lead.name ?? '')
       .replace(/#TELEFONE#/g, lead.phone ?? '')
       .replace(/#EMAIL#/g, lead.email ?? '')
       .replace(/#ENDERECO#/g, lead.address ?? '')
-      .replace(/#NICHO#/g, lead.category ?? '');
+      .replace(/#NICHO#/g, lead.category ?? '')
+      .replace(/#EMPRESA#/g, company?.name ?? '');
 
-    const phone = lead.phone?.replace(/\D/g, '') ?? '';
+    const rawPhone = lead.phone?.replace(/\D/g, '') ?? '';
+    // Add Brazil country code (55) if number doesn't already include it
+    const phone = rawPhone.length <= 11 ? `55${rawPhone}` : rawPhone;
+
+    if (!phone || phone.length < 12) {
+      throw new NotFoundException('Lead sem telefone válido para envio.');
+    }
+
     return this.whatsapp.sendMessage(companyId, phone, message);
   }
 }

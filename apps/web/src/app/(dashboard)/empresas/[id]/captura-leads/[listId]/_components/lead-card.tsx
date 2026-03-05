@@ -10,9 +10,10 @@ import { LeadModal } from './lead-modal';
 interface LeadCardProps {
   lead: Lead;
   companyId: string;
+  onDeleted?: (leadId: string) => void;
 }
 
-export function LeadCard({ lead, companyId }: LeadCardProps) {
+export function LeadCard({ lead, companyId, onDeleted }: LeadCardProps) {
   const [modalOpen, setModalOpen] = useState(false);
 
   const {
@@ -101,7 +102,7 @@ export function LeadCard({ lead, companyId }: LeadCardProps) {
         </div>
       </div>
 
-      <LeadModal lead={lead} companyId={companyId} open={modalOpen} onOpenChange={setModalOpen} />
+      <LeadModal lead={lead} companyId={companyId} open={modalOpen} onOpenChange={setModalOpen} onDeleted={onDeleted} />
     </>
   );
 }

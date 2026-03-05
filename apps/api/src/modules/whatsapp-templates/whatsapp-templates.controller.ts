@@ -51,6 +51,15 @@ export class WhatsappTemplatesController {
     return this.service.update(companyId, id, dto);
   }
 
+  @Post('ai/generate')
+  @HttpCode(HttpStatus.OK)
+  generateContent(
+    @Param('companyId') companyId: string,
+    @Body() body: { name: string; category: string; context?: string },
+  ) {
+    return this.service.generateContent(companyId, body.category, body.name, body.context);
+  }
+
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   remove(

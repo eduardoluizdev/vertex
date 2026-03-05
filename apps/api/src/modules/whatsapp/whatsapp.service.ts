@@ -349,9 +349,16 @@ export class WhatsappService {
         }),
       });
 
+      if (!response.ok) {
+        const errBody = await response.text();
+        console.error('[sendMessage] Evolution error:', errBody);
+        throw new InternalServerErrorException(`Falha ao enviar mensagem: ${errBody}`);
+      }
+
       const data = await response.json();
       return data;
     } catch (error) {
+      if (error instanceof InternalServerErrorException) throw error;
       console.error('[sendMessage] Error:', error);
       throw new InternalServerErrorException('Failed to send WhatsApp message');
     }

@@ -319,6 +319,8 @@ enum LeadListStatus {
 enum WhatsappTemplateCategory {
   LEAD
   PROPOSTA
+  PROPOSTA_CRIADA
+  PROPOSTA_ACEITA
   CAMPANHA
 }
 
